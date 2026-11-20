@@ -29,6 +29,8 @@ function criar() {
 }
 app.on("second-instance", () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 app.whenReady().then(() => {
+  { const prev = process.noAsar; process.noAsar = true; const pending = finishPendingSwap(); process.noAsar = prev; if (pending) return; }
+  try { fs.unlinkSync(path.join(DOCS, "_update", "troca_tentativas.txt")); } catch (e) {}
   criar();
   fs.mkdirSync(BASE, { recursive: true });
   // avisa o After Effects que o Studio está aberto (aí o painel não importa sozinho)
@@ -79,23 +81,40 @@ const upd = Updater.create({
 function updInfo() { const s = upd.state; return { current: s.current, latest: s.latest, available: s.available, notes: s.notes, busy: s.busy, phase: s.phase, progress: s.progress, error: s.error, studio: app.getVersion() }; }
 async function checarUpd(force) { await upd.check(force); if (win) win.webContents.send("upd", updInfo()); return updInfo(); }
 ipcMain.handle("upd:check", (e, force) => checarUpd(!!force));
+/* Troca o .asar do Studio: só dá com o Studio totalmente fechado (o Electron tem vários processos que
+   seguram o arquivo). Um PowerShell separado espera todos fecharem, tenta copiar várias vezes e abre o Studio de novo. */
+const PEND = path.join(DOCS, "_update", "studio_pendente.asar");
+const SWAP_LOG = path.join(DOCS, "_update", "troca_studio.log");
+function swapAndRestart() {
+  const q = x => "'" + String(x).replace(/'/g, "''") + "'";
+  const dst = path.join(path.dirname(app.getAppPath()), "app.asar"), exe = process.execPath;
+  const ps = [
+    `$log = ${q(SWAP_LOG)}; "inicio $(Get-Date)" | Out-File $log`,
+    `$t = 0; while ((Get-Process -Name 'Figma2AE Studio' -ErrorAction SilentlyContinue) -and $t -lt 120) { Start-Sleep -Milliseconds 250; $t++ }`,
+    `$ok = $false; for ($i = 0; $i -lt 40 -and -not $ok; $i++) { try { Copy-Item -LiteralPath ${q(PEND)} -Destination ${q(dst)} -Force -ErrorAction Stop; $ok = $true } catch { "tentativa $i : $($_.Exception.Message)" | Out-File $log -Append; Start-Sleep -Milliseconds 500 } }`,
+    `if ($ok) { Remove-Item -LiteralPath ${q(PEND)} -Force -ErrorAction SilentlyContinue; "ok" | Out-File $log -Append } else { "falhou" | Out-File $log -Append }`,
+    `Start-Process -FilePath ${q(exe)}`
+  ].join("; ");
+  spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-Command", ps], { detached: true, stdio: "ignore", windowsHide: true }).unref();
+  setTimeout(() => app.exit(0), 1500); // exit (não quit) pra fechar tudo de uma vez
+}
+// abriu com uma troca pendente (uma tentativa anterior falhou): termina a atualização sozinho, no máximo 2 vezes
+function finishPendingSwap() {
+  if (!app.isPackaged || !fs.existsSync(PEND)) return false;
+  const tries = path.join(DOCS, "_update", "troca_tentativas.txt");
+  let n = 0; try { n = +fs.readFileSync(tries, "utf8") || 0; } catch (e) {}
+  if (n >= 2) return false;
+  try { fs.writeFileSync(tries, String(n + 1)); } catch (e) {}
+  swapAndRestart(); return true;
+}
 ipcMain.handle("upd:apply", async () => {
   const tick = setInterval(() => win && win.webContents.send("upd", updInfo()), 400);
   const prev = process.noAsar; process.noAsar = true; // o Electron trataria os .asar como pasta
   let r;
   try { r = await upd.apply(); } catch (e) { clearInterval(tick); process.noAsar = prev; return { ok: false, error: e.message }; }
   clearInterval(tick); process.noAsar = prev;
-  const pend = path.join(DOCS, "_update", "studio_pendente.asar");
-  if (r.ok && fs.existsSync(pend) && app.isPackaged) {
-    // troca o .asar do Studio depois que ele fechar e abre de novo
-    const dst = path.join(path.dirname(app.getAppPath()), "app.asar"), exe = process.execPath;
-    const ps = `$p=${process.pid}; while (Get-Process -Id $p -ErrorAction SilentlyContinue) { Start-Sleep -Milliseconds 300 }; ` +
-      `Copy-Item -LiteralPath '${pend.replace(/'/g, "''")}' -Destination '${dst.replace(/'/g, "''")}' -Force; Remove-Item -LiteralPath '${pend.replace(/'/g, "''")}' -Force; ` +
-      `Start-Process -FilePath '${exe.replace(/'/g, "''")}'`;
-    spawn("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { detached: true, stdio: "ignore", windowsHide: true }).unref();
-    r.restarting = true;
-    setTimeout(() => app.quit(), 1800);
-  }
+  const prevNA = process.noAsar; process.noAsar = true; const hasPend = fs.existsSync(PEND); process.noAsar = prevNA;
+  if (r.ok && hasPend && app.isPackaged) { try { fs.unlinkSync(path.join(DOCS, "_update", "troca_tentativas.txt")); } catch (e) {} swapAndRestart(); r.restarting = true; }
   return r;
 });
 
