@@ -25,15 +25,12 @@ jobs:
           echo "version=$V" >> "$GITHUB_OUTPUT"
           if gh release view "v$V" >/dev/null 2>&1; then echo "exists=1" >> "$GITHUB_OUTPUT"; else echo "exists=0" >> "$GITHUB_OUTPUT"; fi
         env: { GH_TOKEN: "${{ github.token }}" }
-      - name: Notas (mensagem do commit)
+      - name: Notas (mensagem do commit, sem as linhas de assinatura)
         if: steps.v.outputs.exists == '0'
-        id: n
-        run: |
-          N=$(git log -1 --pretty=%B | head -c 900)
-          { echo "notes<<EOF"; echo "$N"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+        run: git log -1 --pretty=%B | grep -v -E '^(Co-Authored-By|Claude-Session):' | sed '/^\s*$/d' | head -c 900 > /tmp/notes.txt; cat /tmp/notes.txt
       - name: Pacote de atualização
         if: steps.v.outputs.exists == '0'
-        run: python3 tools/publicar.py "${{ steps.v.outputs.version }}" "${{ steps.n.outputs.notes }}" --no-stamp
+        run: python3 tools/publicar.py "${{ steps.v.outputs.version }}" "$(cat /tmp/notes.txt)" --no-stamp
       - name: Studio para Windows
         if: steps.v.outputs.exists == '0'
         run: npx --yes @electron/packager studio/app "Figma2AE Studio" --platform=win32 --arch=x64 --electron-version=45.4.1 --out=out --overwrite
@@ -44,5 +41,5 @@ jobs:
         if: steps.v.outputs.exists == '0'
         run: |
           V="${{ steps.v.outputs.version }}"
-          gh release create "v$V" --title "Figma2AE $V" --notes "${{ steps.n.outputs.notes }}" --latest dist/$V/*.zip dist/$V/latest.json
+          gh release create "v$V" --title "Figma2AE $V" --notes-file /tmp/notes.txt --latest dist/$V/*.zip dist/$V/latest.json
         env: { GH_TOKEN: "${{ github.token }}" }
