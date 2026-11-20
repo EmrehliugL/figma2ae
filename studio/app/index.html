@@ -111,6 +111,25 @@ input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px;margin:0}
 .modal{animation:fadein .16s ease-out}.modal .box{animation:popin .18s ease-out}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 @keyframes popin{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+
+/* ---- controles clean: caixa de seleção e campo numérico com setinhas próprias ---- */
+input[type=checkbox]{-webkit-appearance:none;appearance:none;width:15px;height:15px;margin:0;flex:none;border:1.5px solid #555;border-radius:4px;background:#1b1b1b;display:inline-grid;place-content:center;cursor:pointer;vertical-align:middle;transition:background-color .14s,border-color .14s,box-shadow .14s}
+input[type=checkbox]:hover{border-color:#7a7a7a}
+input[type=checkbox]:checked{background:#2d8ceb;border-color:#2d8ceb}
+input[type=checkbox]::after{content:"";width:7px;height:4px;border:2px solid #fff;border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg) scale(0);transition:transform .14s cubic-bezier(.3,1.5,.6,1)}
+input[type=checkbox]:checked::after{transform:translateY(-1px) rotate(-45deg) scale(1)}
+input[type=checkbox]:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(45,140,235,.35)}
+input[type=checkbox]:disabled{opacity:.45;cursor:default}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+.f2num{position:relative;display:inline-flex;align-items:stretch;vertical-align:middle}
+.f2num>input[type=number]{padding-right:20px!important}
+.f2num .stp{position:absolute;right:2px;top:2px;bottom:2px;width:15px;display:flex;flex-direction:column;border-left:1px solid #333;opacity:.55;transition:opacity .14s}
+.f2num:hover .stp,.f2num:focus-within .stp{opacity:1}
+.f2num .stp button{flex:1;min-height:0;padding:0;margin:0;border:0;background:transparent;color:#bbb;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:2px;line-height:0}
+.f2num .stp button:hover{background:#2f2f2f;color:#fff}
+.f2num .stp button:active{background:#2d8ceb;color:#fff}
+.f2num .stp svg{width:7px;height:5px;display:block}
 </style>
 </head>
 <body>
@@ -317,6 +336,33 @@ $("#ulink").onclick = async () => {
 };
 api.updCheck(false).then(s => { UPD = s; paintUpdBar(); });
 loadCfg().then(() => { listar(); ping(); setInterval(ping, 3000); render(); });
+</script>
+<script>
+/* campo numérico com setinhas próprias (as nativas do Chromium ficam feias no tema escuro) */
+(function () {
+  var UP = '<svg viewBox="0 0 8 5"><path d="M1 4l3-3 3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var DN = '<svg viewBox="0 0 8 5"><path d="M1 1l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function step(inp, dir) {
+    try { dir > 0 ? inp.stepUp() : inp.stepDown(); } catch (e) { var s = parseFloat(inp.step) || 1; inp.value = Math.round(((parseFloat(inp.value) || 0) + dir * s) * 1000) / 1000; }
+    inp.dispatchEvent(new Event("input", { bubbles: true })); inp.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  function wrap(inp) {
+    if (inp.__f2 || !inp.parentNode) return; inp.__f2 = 1;
+    var w = document.createElement("span"); w.className = "f2num";
+    inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
+    var s = document.createElement("span"); s.className = "stp";
+    s.innerHTML = '<button type="button" tabindex="-1" aria-label="Aumentar">' + UP + '</button><button type="button" tabindex="-1" aria-label="Diminuir">' + DN + '</button>';
+    w.appendChild(s);
+    var bs = s.querySelectorAll("button"), t = null;
+    [[bs[0], 1], [bs[1], -1]].forEach(function (p) {
+      p[0].addEventListener("mousedown", function (ev) { ev.preventDefault(); step(inp, p[1]); var n = 0; t = setInterval(function () { if (++n > 4) step(inp, p[1]); }, 80); });
+    });
+    var stop = function () { clearInterval(t); }; document.addEventListener("mouseup", stop); s.addEventListener("mouseleave", stop);
+  }
+  function scan(root) { (root.querySelectorAll ? root.querySelectorAll("input[type=number]") : []).forEach(wrap); }
+  function boot() { scan(document); new MutationObserver(function (ms) { ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) { if (n.matches && n.matches("input[type=number]")) wrap(n); else scan(n); } }); }); }).observe(document.body, { childList: true, subtree: true }); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+})();
 </script>
 </body>
 </html>

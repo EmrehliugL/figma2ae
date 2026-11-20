@@ -56,3 +56,35 @@ const LIN = { type: "GRADIENT_LINEAR", visible: true, gradientTransform: [[1, 0,
   assert.deepStrictEqual(inner.children.map(c => c.name), ["82 percent", "Bola"]);
   console.log("TODOS OS TESTES DE EFEITOS E MÁSCARAS PASSARAM");
 })().catch(e => { console.error(e); process.exit(1); });
+
+// ---- texto com fileiras de estilos diferentes → uma camada por fileira
+(async () => {
+  const fade = [solid(1, 1, 1, 0.35)], full = [solid(1, 1, 1, 1)];
+  const T = (name, chars, segs, extra) => makeNode("TEXT", Object.assign({ name, characters: chars, x: 40, y: 20, width: 520, height: 3 * 120, fontName: { family: "Inter", style: "Regular" }, fontSize: 100, fills: fade, textAutoResize: "HEIGHT", _segs: segs }, extra || {}));
+  const a = T("Manchete", "No\nviolations\nfound?", [{ start: 0, end: 3, fills: fade }, { start: 3, end: 14, fills: full }, { start: 14, end: 20, fills: fade }]);
+  // mesma coisa sem "\n": quebra automática da caixa
+  const b = T("Manchete wrap", "No violations found?", [{ start: 0, end: 3, fills: fade }, { start: 3, end: 13, fills: full }, { start: 13, end: 20, fills: fade }], { y: 500, _wrapWords: true });
+  // estilo muda no meio da linha → continua uma camada só
+  const c = T("Inline", "No violations found?", [{ start: 0, end: 3, fills: fade }, { start: 3, end: 13, fills: full }, { start: 13, end: 20, fills: fade }], { y: 900 });
+  // texto longo (chat) → uma camada só
+  const longTxt = "Olá! ".repeat(40) + "\nfim";
+  const d = T("Chat", longTxt, [{ start: 0, end: 200, fills: fade }, { start: 200, end: longTxt.length, fills: full }], { y: 950 });
+  const f = makeNode("FRAME", { name: "2.1", width: 1920, height: 1080, clipsContent: true, fills: [solid(0, 0, 0)] }, [a, b, c, d]);
+  const page = makeNode("PAGE", { name: "P2" }, [f]);
+  M.install(page); page.selection = [f];
+  P.describeTargets(P.resolveTargets(page.selection));
+  const pkg = JSON.parse((await P.exportFrames({ options: {} })).manifest);
+  const [la, lb, lc, ld] = pkg.comps[0].layers;
+  for (const g of [la, lb]) {
+    assert.strictEqual(g.kind, "group", g.name + " vira grupo de fileiras");
+    assert.deepStrictEqual(g.children.map(k => k.text), ["No", "violations", "found?"]);
+    assert.deepStrictEqual(g.children.map(k => k.name), ["No", "violations", "found?"]);
+    assert.deepStrictEqual(g.children.map(k => k.colorAlpha), [0.35, 1, 0.35], "opacidade de cada fileira igual ao Figma");
+    assert.deepStrictEqual(g.children.map(k => Math.round(k.xf.ty - g.children[0].xf.ty)), [0, 120, 240], "cada fileira na altura certa");
+    assert.ok(g.children.every(k => k.xf.tx === 40));
+  }
+  assert.strictEqual(la.children[0].xf.ty, 20);
+  assert.strictEqual(lc.kind, "text"); assert.strictEqual(ld.kind, "text");
+  assert.strictEqual(page.children.length, 1, "clones de medição removidos");
+  console.log("TODOS OS TESTES DE TEXTO EM FILEIRAS PASSARAM");
+})().catch(e => { console.error(e); process.exit(1); });

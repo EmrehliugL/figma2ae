@@ -743,7 +743,7 @@ Exporter.prototype.spec = async function (node, containerAbs, depth) {
   if (fx.unsupported.length) base.notes.push("efeitos ignorados: " + fx.unsupported.join(", "));
   if (fx.list.some(function (e) { return e.type === "bgblur"; })) base.bgShape = bgBlurShape(node);
 
-  if (node.type === "TEXT") return this.textSpec(node, base, containerAbs);
+  if (node.type === "TEXT") return this.textMaybeSplit(node, base, containerAbs);
 
   if (CONTAINER_TYPES[node.type] && "children" in node) {
     if (depth > 10) return this.raster(node, containerAbs, base, "OTHER", "aninhamento muito profundo");
@@ -805,6 +805,91 @@ Exporter.prototype.childSpecs = async function (kids, abs, depth, w, h, pad, onE
     if (run) run.children.push(ks); else out.push(ks);
   }
   return out;
+};
+/* Títulos curtos com trechos de estilo diferente (ex.: "No" apagadinho, "violations" forte, "found?" apagadinho),
+   cada trecho começando numa linha nova → uma camada de texto por fileira, na posição exata do Figma
+   (dá pra animar cada uma). Texto longo (parágrafos, falas de chat) continua numa camada só. */
+var SPLIT_MAX_CHARS = 160, SPLIT_MAX_PIECES = 8;
+function textStyleKey(s) { return JSON.stringify([s.fontName, s.fontSize, visiblePaints(s.fills).map(paintSig)]); }
+Exporter.prototype.textMaybeSplit = async function (node, base, containerAbs) {
+  var pieces = null;
+  try { pieces = await this.textPieces(node); } catch (e) { pieces = null; }
+  if (!pieces || pieces.length < 2) return this.textSpec(node, base, containerAbs);
+  var g = { kind: "group", name: node.name, figmaType: "TEXT", figmaId: node.id, xf: base.xf, w: base.w, h: base.h, opacity: 1, blend: "NORMAL", effects: [], notes: [], children: [] };
+  var at = node.absoluteTransform;
+  for (var i = 0; i < pieces.length; i++) {
+    var pc = pieces[i], cl = node.clone();
+    try {
+      cl.textAutoResize = "HEIGHT"; cl.textAlignVertical = "TOP";
+      if (pc.end < cl.characters.length) cl.deleteCharacters(pc.end, cl.characters.length);
+      if (pc.start > 0) cl.deleteCharacters(0, pc.start);
+      // mesmo ponto do original, descido "top" px no eixo vertical do próprio texto (vale com rotação)
+      cl.relativeTransform = [[at[0][0], at[0][1], at[0][2] + at[0][1] * pc.top], [at[1][0], at[1][1], at[1][2] + at[1][1] * pc.top]];
+      var fx = supportedEffects(node), b = this.baseOf(cl, containerAbs, fx);
+      b.name = pc.label; b.opacity = base.opacity; b.blend = base.blend; b.figmaId = node.id;
+      if (base.bgShape) b.bgShape = bgBlurShape(cl);
+      g.children.push(await this.textSpec(cl, b, containerAbs));
+    } finally { try { cl.remove(); } catch (e) {} }
+  }
+  return g;
+};
+Exporter.prototype.textPieces = async function (node) {
+  var text = node.characters || "";
+  if (!text || text.length > SPLIT_MAX_CHARS) return null;
+  var segs = node.getStyledTextSegments(["fontName", "fontSize", "fills"]);
+  if (!segs || segs.length < 2) return null;
+  var keys = {}; segs.forEach(function (sg) { keys[textStyleKey(sg)] = 1; });
+  if (Object.keys(keys).length < 2) return null;
+  // runs de estilo (trechos vizinhos com o mesmo estilo se juntam)
+  var runs = [];
+  segs.forEach(function (sg) {
+    var k = textStyleKey(sg), last = runs[runs.length - 1];
+    if (last && last.key === k) last.end = sg.end; else runs.push({ key: k, start: sg.start, end: sg.end });
+  });
+  // espaços/quebras nas pontas não contam como trecho (um "\n" ou " " com outra cor não cria camada)
+  runs = runs.filter(function (r) { return /\S/.test(text.slice(r.start, r.end)); });
+  if (runs.length < 2 || runs.length > SPLIT_MAX_PIECES) return null;
+  // precisa poder editar o texto pra medir (fontes carregadas)
+  var fonts = node.getRangeAllFontNames(0, text.length);
+  for (var f = 0; f < fonts.length; f++) await figma.loadFontAsync(fonts[f]);
+  var self = this, cache = {};
+  async function heightUpTo(k) { // altura do texto só até o caractere k (= fundo da última linha dele)
+    if (k <= 0) return 0;
+    if (cache[k] !== undefined) return cache[k];
+    var c = node.clone();
+    try {
+      c.textAutoResize = "HEIGHT"; c.textAlignVertical = "TOP";
+      if (k < c.characters.length) c.deleteCharacters(k, c.characters.length);
+      cache[k] = c.height;
+    } finally { try { c.remove(); } catch (e) {} }
+    return cache[k];
+  }
+  // deslocamento quando a caixa é fixa e o texto está centralizado/embaixo
+  var full = await heightUpTo(text.length), shift = 0;
+  if (node.textAutoResize === "NONE" || node.textAutoResize === "TRUNCATE") {
+    if (node.textAlignVertical === "CENTER") shift = (node.height - full) / 2;
+    else if (node.textAlignVertical === "BOTTOM") shift = node.height - full;
+  }
+  var pieces = [];
+  for (var i = 0; i < runs.length; i++) {
+    var st = runs[i].start, en = runs[i].end;
+    while (st < en && /\s/.test(text[st])) st++;
+    while (en > st && /\s/.test(text[en - 1])) en--;
+    var prevEnd = i ? pieces[pieces.length - 1].end : 0;
+    var top = 0;
+    if (i) {
+      // o trecho só vira camada própria se começa numa linha nova (quebra manual ou quebra automática da caixa)
+      var hPrev = await heightUpTo(prevEnd), hFirst = await heightUpTo(st + 1);
+      var gap = text.slice(prevEnd, st);
+      if (gap.indexOf("\n") < 0 && !(hFirst > hPrev + 0.5)) return null; // muda de estilo no meio da linha: mantém uma camada
+      top = hPrev + (gap.indexOf("\n") >= 0 && node.paragraphSpacing ? node.paragraphSpacing : 0);
+      if (gap.indexOf("\n") < 0) top = hPrev; // quebra automática: a linha seguinte começa onde a anterior termina
+    }
+    var label = text.slice(st, en).replace(/\s+/g, " ");
+    if (label.length > 32) label = label.slice(0, 30) + "…";
+    pieces.push({ start: st, end: en, top: r2(top + shift), label: label });
+  }
+  return pieces;
 };
 Exporter.prototype.textSpec = async function (node, base, containerAbs) {
   var segs = [];

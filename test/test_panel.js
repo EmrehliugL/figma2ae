@@ -16,10 +16,10 @@ function cep() { return {
 }; }
 function load(file, url) {
   const html = fs.readFileSync(path.join(__dirname, "../extension", file), "utf8");
-  const dom = new JSDOM(html.replace(/<script>[\s\S]*<\/script>/, ""), { runScripts: "outside-only", url });
+  const dom = new JSDOM(html.replace(/<script>[\s\S]*?<\/script>/g, ""), { runScripts: "outside-only", url });
   const w = dom.window; w.require = require; w.process = process; w.__adobe_cep__ = cep();
   Object.defineProperty(w, "localStorage", { value: { getItem: () => null, setItem() {} } });
-  w.eval(html.match(/<script>([\s\S]*)<\/script>/)[1].replace('"use strict";', ""));
+  [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].forEach(m => w.eval(m[1].replace('"use strict";', "")));
   return w;
 }
 function req(method, url, body, headers) {

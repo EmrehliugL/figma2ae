@@ -31,7 +31,17 @@ function makeNode(type, props, children) {
   // como no Figma: o clone vai pra página atual (mesmos x/y locais, então muda a posição absoluta)
   n.clone = () => { const c = deepClone(n); const pg = global.figma && global.figma.currentPage; c.parent = pg || n.parent; if (c.parent && c.parent.children) c.parent.children.push(c); return c; };
   if (type === "TEXT") {
-    n.getStyledTextSegments = () => [{ start: 0, end: n.characters.length, fontName: n.fontName, fontSize: n.fontSize, fills: n.fills, letterSpacing: { unit: "PIXELS", value: 0 }, lineHeight: { unit: "AUTO" }, textCase: "ORIGINAL", textDecoration: "NONE" }];
+    // _segs opcional: [{ start, end, fills }] (estilos mistos). Layout simulado: 1 linha por "\n";
+    // com _wrapWords cada palavra quebra pra linha de baixo (simula quebra automática da caixa)
+    const seg = (a, b, f) => ({ start: a, end: b, fontName: n.fontName, fontSize: n.fontSize, fills: f, letterSpacing: { unit: "PIXELS", value: 0 }, lineHeight: { unit: "AUTO" }, textCase: "ORIGINAL", textDecoration: "NONE" });
+    n.getStyledTextSegments = () => (n._segs ? n._segs.map(x => seg(x.start, x.end, x.fills)) : [seg(0, n.characters.length, n.fills)]);
+    n.getRangeAllFontNames = () => [n.fontName];
+    n.deleteCharacters = (a, b) => {
+      n.characters = n.characters.slice(0, a) + n.characters.slice(b);
+      if (n._segs) n._segs = n._segs.map(x => ({ start: x.start < a ? x.start : Math.max(a, x.start - (b - a)), end: x.end <= a ? x.end : Math.max(a, x.end - (b - a)), fills: x.fills })).filter(x => x.end > x.start);
+      if (n.textAutoResize === "HEIGHT") n.height = mockLines(n) * n.fontSize * 1.2;
+    };
+    Object.defineProperty(n, "relativeTransform", { set(m) { n.x = m[0][2]; n.y = m[1][2]; n.rotation = Math.atan2(m[1][0], m[0][0]) * 180 / Math.PI; }, get() { const t = n.absoluteTransform; return t; }, configurable: true });
   }
   if (type === "INSTANCE") n.getMainComponentAsync = async () => n._main || null;
   if (["RECTANGLE", "ELLIPSE", "VECTOR", "STAR", "POLYGON", "LINE", "BOOLEAN_OPERATION"].includes(type) && !n.fillGeometry) {
@@ -43,10 +53,15 @@ function makeNode(type, props, children) {
   }
   return n;
 }
+function mockLines(n) {
+  const t = n.characters || "";
+  if (!t) return 1;
+  return t.split("\n").reduce((a, l) => a + (n._wrapWords ? Math.max(1, l.trim().split(/\s+/).length) : 1), 0);
+}
 function deepClone(n) {
   const kids = n.children ? n.children.map(deepClone) : undefined;
   const props = {};
-  for (const k of Object.keys(n)) if (!["id", "children", "parent", "getPluginData", "setPluginData", "exportAsync", "remove", "clone", "getStyledTextSegments", "getMainComponentAsync"].includes(k)) props[k] = n[k];
+  for (const k of Object.keys(n)) if (!["id", "children", "parent", "getPluginData", "setPluginData", "exportAsync", "remove", "clone", "getStyledTextSegments", "getMainComponentAsync", "getRangeAllFontNames", "deleteCharacters", "relativeTransform"].includes(k)) props[k] = n[k];
   props._plugin = Object.assign({}, n._plugin);   // pluginData acompanha a duplicação
   const c = makeNode(n.type, props, kids);
   return c;
@@ -56,7 +71,7 @@ function image(hash) { return { type: "IMAGE", imageHash: hash, scaleMode: "FILL
 
 function install(page) {
   global.figma = {
-    mixed: MIXED, currentPage: page, root: { name: "Storyboard Teste" },
+    mixed: MIXED, currentPage: page, root: { name: "Storyboard Teste" }, loadFontAsync: async () => {},
     getNodeByIdAsync: async id => REG[id] || null,
     getImageByHash: h => ({ getSizeAsync: async () => ({ width: 2000, height: 1200 }), getBytesAsync: async () => new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0, h.length & 255, 7, 7, 7]) }),
     ui: { postMessage: () => {} }, notify: () => {}, viewport: { scrollAndZoomIntoView() {} }
