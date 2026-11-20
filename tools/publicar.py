@@ -30,6 +30,9 @@ def stamp(version):
     sub("after-effects/Figma2AE.jsx", r'var VERSION = "[^"]*"', f'var VERSION = "{version}"')
     sub("extension/CSXS/manifest.xml", r'(Version|ExtensionBundleVersion)="\d+\.\d+\.\d+"', lambda m: f'{m.group(1)}="{version}"')
     sub("studio/app/package.json", r'"version": "[^"]*"', f'"version": "{version}"')
+    # o Studio usa o mesmo atualizador da extensão
+    import shutil
+    shutil.copy(os.path.join(ROOT, "extension", "updater.js"), os.path.join(ROOT, "studio", "app", "updater.js"))
     # a biblioteca do After dentro da extensão é uma cópia do script
     src = open(os.path.join(ROOT, "after-effects", "Figma2AE.jsx"), encoding="utf-8").read()
     open(os.path.join(ROOT, "extension", "jsx", "Figma2AE.jsx"), "w", encoding="utf-8").write(src)

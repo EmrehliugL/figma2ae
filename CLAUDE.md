@@ -6,7 +6,7 @@ Projeto do Iug (motion designer, fala português do Brasil, informal). Ele quer 
 - `figma-plugin/` (`code.js` lógica, `ui.html` interface). O Figma lê os arquivos do disco a cada execução.
 - `extension/` (CEP, id `com.iug.figma2ae`): `index.html` painel, `server.html` receptor escondido (porta 7452, endpoints `/ping`, `/package`, `/build`, `/update/check|status|apply`), `updater.js`, `discord.js`, `host/host.jsx`, `jsx/Figma2AE.jsx` (cópia de `after-effects/Figma2AE.jsx`).
 - `after-effects/Figma2AE.jsx`: monta comps (ES3/ExtendScript). Recarregado a cada importação.
-- `studio/app/`: Electron (`engine.js` análise de tomadas, `main.js`, `index.html`).
+- `studio/app/`: Electron (`engine.js` análise de tomadas, `main.js`, `index.html`). Tem o botão **"Atualizar tudo"** na barra de título: atualiza plugin do Figma + extensão do After + o próprio Studio (reinicia sozinho). `studio/app/updater.js` é cópia de `extension/updater.js` (o `publicar.py` copia).
 - `installer/`: arquivos do zip de instalação (`INSTALAR.bat` aceita `/auto`; `installer/CLAUDE.md` é o roteiro de instalação para outro Claude, diferente deste arquivo).
 
 ## Testes

@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld("api", {
   cfg: () => ipcRenderer.invoke("cfg"),
   salvarCfg: c => ipcRenderer.invoke("salvarCfg", c),
   pasta: id => ipcRenderer.invoke("pasta", id),
+  updCheck: force => ipcRenderer.invoke("upd:check", force),
+  updApply: () => ipcRenderer.invoke("upd:apply"),
+  onUpd: fn => ipcRenderer.on("upd", (e, s) => fn(s)),
   tamanho: ids => ipcRenderer.invoke("tamanho", ids),
   apagar: ids => ipcRenderer.invoke("apagar", ids),
   onAtualizar: fn => ipcRenderer.on("atualizar", () => fn())

@@ -19,6 +19,10 @@ button:disabled{opacity:.4;cursor:default}
 .title img{width:18px;height:18px}
 .title b{font-weight:600;color:#fff;font-size:12.5px}
 .title span{color:var(--faint);font-size:12px}
+.updbox{margin-left:auto;margin-right:150px;display:flex;align-items:center;gap:10px;-webkit-app-region:no-drag}
+.uver{color:var(--faint);font-size:11.5px}.ulink{color:#7fb6ee;font-size:11.5px;cursor:pointer}.ulink:hover{text-decoration:underline}
+.ubtn{background:#2d8ceb;border:0;color:#fff;border-radius:4px;padding:5px 12px;font-weight:600;font-size:12px;cursor:pointer;box-shadow:0 0 0 0 #2d8ceb88;animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #2d8ceb88}70%{box-shadow:0 0 0 8px #2d8ceb00}100%{box-shadow:0 0 0 0 #2d8ceb00}}
 .wrap{display:grid;grid-template-columns:270px 1fr;height:calc(100% - 38px)}
 .side{border-right:1px solid var(--line2);display:flex;flex-direction:column;min-height:0;background:#1e1e1e}
 .side h4{margin:0;padding:12px 14px 8px;font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.7px;font-weight:600;display:flex;align-items:center}
@@ -94,7 +98,8 @@ input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px;margin:0}
 </style>
 </head>
 <body>
-<div class="title"><img src="icon.png" alt=""><b>Figma2AE Studio</b><span>monta as tomadas no After Effects</span></div>
+<div class="title"><img src="icon.png" alt=""><b>Figma2AE Studio</b><span>monta as tomadas no After Effects</span>
+  <div class="updbox" id="updbox"><span class="uver" id="uver"></span><button class="ubtn" id="ubtn" hidden>⟳ Atualizar tudo</button><a class="ulink" id="ulink">procurar atualizações</a></div></div>
 <div class="wrap">
   <div class="side">
     <h4>Recebidos do Figma <button id="pasta" title="Abrir a pasta dos pacotes">abrir pasta</button></h4>
@@ -253,6 +258,47 @@ async function ping() {
   if (DATA) $("#montar").disabled = BUSY || !AE || !AE.ok;
 }
 api.onAtualizar(() => listar());
+/* ---------- atualização universal (plugin do Figma + extensão do After + Studio, num clique) ---------- */
+let UPD = null, updBusy = false;
+function paintUpdBar() {
+  const u = UPD || {};
+  $("#uver").textContent = u.current ? "v" + u.current : "";
+  $("#ubtn").hidden = !u.available || updBusy;
+  if (u.available) $("#ubtn").textContent = "⟳ Atualizar tudo (v" + u.latest + ")";
+  $("#ulink").textContent = updBusy ? "atualizando…" : u.available ? "o que mudou?" : (u.error ? "sem conexão · tentar de novo" : "procurar atualizações");
+  $("#ulink").title = u.error || "";
+}
+api.onUpd(s => { UPD = s; paintUpdBar(); if (updBusy) showUpdModal("progress"); });
+function showUpdModal(kind, data) {
+  document.querySelectorAll(".modal").forEach(x => x.remove());
+  const u = UPD || {}, d = document.createElement("div"); d.className = "modal";
+  let body = "";
+  if (kind === "ask") body = `<b>Atualizar tudo para a v${esc(u.latest)}</b><p>Atualiza de uma vez o <b>plugin do Figma</b>, a <b>extensão do After Effects</b> e este <b>Studio</b>.</p>
+      ${u.notes ? `<p class="small">O que mudou: ${esc(u.notes)}</p>` : ""}<p class="small">O Studio fecha e abre sozinho no fim. Depois, reabra o plugin no Figma e reinicie o After Effects.</p>
+      <div class="row"><button class="btn" data-x>Agora não</button><button class="btn primary" data-ok>Atualizar tudo</button></div>`;
+  else if (kind === "progress") body = `<b>Atualizando…</b><p>${esc(u.phase || "preparando")} ${u.progress ? u.progress + "%" : ""}</p><p class="small">Não feche o Studio.</p>`;
+  else if (kind === "done") body = `<b>Pronto: v${esc(data.version)} instalada!</b><p>Plugin do Figma e extensão do After atualizados.${data.restarting ? " O Studio vai reiniciar agora." : ""}</p><p class="small">Reabra o plugin no Figma e reinicie o After Effects pra usar a versão nova.</p>${data.restarting ? "" : '<div class="row"><button class="btn primary" data-x>Ok</button></div>'}`;
+  else if (kind === "none") body = `<b>Você já está na versão mais nova</b><p>v${esc(u.current)}</p><div class="row"><button class="btn primary" data-x>Ok</button></div>`;
+  else body = `<b>Não deu pra atualizar</b><p>${esc(data)}</p><div class="row"><button class="btn" data-x>Fechar</button><button class="btn primary" data-ok>Tentar de novo</button></div>`;
+  d.innerHTML = `<div class="box">${body}</div>`; document.body.appendChild(d);
+  const x = d.querySelector("[data-x]"); if (x) x.onclick = () => d.remove();
+  const ok = d.querySelector("[data-ok]"); if (ok) ok.onclick = runUpd;
+}
+async function runUpd() {
+  updBusy = true; paintUpdBar(); showUpdModal("progress");
+  const r = await api.updApply();
+  updBusy = false;
+  if (r && r.ok && !r.nothing) showUpdModal("done", r); else if (r && r.nothing) showUpdModal("none"); else showUpdModal("err", (r && r.error) || "erro desconhecido");
+  paintUpdBar();
+}
+$("#ubtn").onclick = () => showUpdModal("ask");
+$("#ulink").onclick = async () => {
+  if (UPD && UPD.available) return showUpdModal("ask");
+  $("#ulink").textContent = "procurando…";
+  UPD = await api.updCheck(true); paintUpdBar();
+  if (UPD.available) showUpdModal("ask"); else if (!UPD.error) showUpdModal("none");
+};
+api.updCheck(false).then(s => { UPD = s; paintUpdBar(); });
 loadCfg().then(() => { listar(); ping(); setInterval(ping, 3000); render(); });
 </script>
 </body>
