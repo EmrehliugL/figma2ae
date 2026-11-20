@@ -17,7 +17,7 @@ function cep() { return {
 function load(file, url) {
   const html = fs.readFileSync(path.join(__dirname, "../extension", file), "utf8");
   const dom = new JSDOM(html.replace(/<script>[\s\S]*<\/script>/, ""), { runScripts: "outside-only", url });
-  const w = dom.window; w.require = require; w.__adobe_cep__ = cep();
+  const w = dom.window; w.require = require; w.process = process; w.__adobe_cep__ = cep();
   Object.defineProperty(w, "localStorage", { value: { getItem: () => null, setItem() {} } });
   w.eval(html.match(/<script>([\s\S]*)<\/script>/)[1].replace('"use strict";', ""));
   return w;
@@ -78,6 +78,29 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   assert.ok(bcall && /"fps":25/.test(bcall), "chamou o After Effects com o plano e as opções");
   const bad = JSON.parse((await req("POST", "/build", JSON.stringify({ id: "../../etc", plan }))).body);
   assert.ok(!bad.ok, "não aceita caminho fora da pasta Recebidos");
+  // 5b) Studio INSTALADO mas fechado: o pacote vai pro Studio (abre o Studio), não pro painel
+  fs.unlinkSync(path.join(base, "_studio.json"));
+  const fakeLocal = "/tmp/fakelocal"; fs.rmSync(fakeLocal, { recursive: true, force: true });
+  const exeDir = path.join(fakeLocal, "Programs", "Figma2AE Studio"); fs.mkdirSync(exeDir, { recursive: true });
+  const exe = path.join(exeDir, "Figma2AE Studio.exe");
+  fs.writeFileSync(exe, "#!/bin/sh\necho $$ > /tmp/fakelocal/abriu\n"); fs.chmodSync(exe, 0o755);
+  process.env.LOCALAPPDATA = fakeLocal;
+  opened.length = 0;
+  const rs = JSON.parse((await req("POST", "/package", zip, { "X-F2AE-Name": "Vai pro Studio" })).body);
+  assert.strictEqual(rs.route, "studio", "com o Studio instalado o destino é o Studio");
+  assert.strictEqual(rs.auto, false, "não importa sozinho no After");
+  await sleep(600);
+  assert.ok(fs.existsSync("/tmp/fakelocal/abriu"), "abriu o Studio");
+  assert.strictEqual(opened.length, 0, "não abriu o painel");
+  const pg = JSON.parse((await req("GET", "/ping")).body);
+  assert.strictEqual(pg.route, "studio");
+  // opção desligada no painel: volta pro painel
+  fs.writeFileSync(path.join(base, "_config.json"), JSON.stringify({ oStudio: false }));
+  const rp = JSON.parse((await req("POST", "/package", zip, { "X-F2AE-Name": "Vai pro painel" })).body);
+  assert.strictEqual(rp.route, "panel");
+  assert.deepStrictEqual(opened, ["com.iug.figma2ae.panel"]);
+  delete process.env.LOCALAPPDATA;
+  fs.writeFileSync(path.join(base, "_studio.json"), "{}");
   // 6) apagar do disco: lixeira por pacote pede confirmação e remove a pasta
   const before = fs.readdirSync(base).filter(n => !n.startsWith("_")).length;
   w.document.querySelector("[data-rm]").click();

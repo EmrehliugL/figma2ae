@@ -4,7 +4,8 @@
 "use strict";
 const net = require("net"), fs = require("fs"), path = require("path"), os = require("os");
 
-const CFG = path.join(os.homedir(), "Documents", "Figma2AE", "discord.json");
+let PATHS = null; try { PATHS = require("./paths.js"); } catch (e) {}
+const CFG = path.join(PATHS ? PATHS.docs() : path.join(os.homedir(), "Documents", "Figma2AE"), "discord.json");
 const RETRY_MS = 15000;
 
 function readCfg(file) { try { return JSON.parse(fs.readFileSync(file || CFG, "utf8")); } catch (e) { return {}; } }

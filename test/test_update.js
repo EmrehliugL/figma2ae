@@ -25,7 +25,7 @@ const srv = http.createServer((q, s) => {
   assert.ok(U.cmpVer("2.10.0", "2.9.9") > 0 && U.cmpVer("2.3.0", "2.3.0") === 0 && U.cmpVer("2.3.0", "2.3.1") < 0, "comparação de versões");
   // fonte lida de Documentos\Figma2AE\update_source.txt: aqui o updater usa DOCS do usuário, então passamos docsDir e trocamos a fonte via env
   const realHome = os.homedir; os.homedir = () => T; fs.mkdirSync(path.join(T, "Documents", "Figma2AE"), { recursive: true }); fs.writeFileSync(path.join(T, "Documents", "Figma2AE", "update_source.txt"), base);
-  delete require.cache[require.resolve("../extension/updater.js")];
+  delete require.cache[require.resolve("../extension/updater.js")]; delete require.cache[require.resolve("../extension/paths.js")];
   const U2 = require("../extension/updater.js");
   const u = U2.create({ extDir: ext, unzip: unzipTo, studioOpen: () => studioOpen, studioDir: studio, docsDir: docs });
   await u.check(true);
@@ -40,7 +40,7 @@ const srv = http.createServer((q, s) => {
   assert.ok(r.ok && r.version === latest.version, JSON.stringify(r));
   assert.ok(fs.readFileSync(path.join(ext, "server.html"), "utf8").includes("Receptor do Figma2AE"), "extensão trocada");
   assert.ok(fs.existsSync(path.join(ext, "updater.js")), "arquivos novos da extensão");
-  assert.ok(fs.existsSync(path.join(docs, "figma-plugin", "code.js")), "plugin do Figma atualizado");
+  assert.ok(fs.existsSync(path.join(T, "Documents", "Figma2AE", "figma-plugin", "code.js")), "plugin do Figma atualizado (na pasta Documentos real)");
   assert.strictEqual(JSON.parse(fs.readFileSync(path.join(ext, "version.json"))).version, latest.version);
   assert.strictEqual(r.studio, "pendente", "Studio aberto: fica pendente");
   assert.strictEqual(fs.readFileSync(path.join(studio, "resources", "app.asar"), "utf8"), "asar antigo");

@@ -4,7 +4,7 @@ rem Confere se o Figma2AE esta instalado. Cada linha sai como [OK] ou [FALTA].
 rem Codigo de saida: 0 = tudo ok | 1 = algo falta
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ok = $true; function T($n, $c) { if ($c) { Write-Host ('[OK]    ' + $n) } else { Write-Host ('[FALTA] ' + $n); $script:ok = $false } }" ^
-  "$docs = Join-Path $env:USERPROFILE 'Documents\Figma2AE';" ^
+  "$docs = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Figma2AE';" ^
   "T 'Plugin do Figma (Documentos\Figma2AE\figma-plugin\manifest.json)' (Test-Path (Join-Path $docs 'figma-plugin\manifest.json'));" ^
   "T 'Pastas Recebidos e Biblioteca' ((Test-Path (Join-Path $docs 'Recebidos')) -and (Test-Path (Join-Path $docs 'Biblioteca')));" ^
   "T 'Extensao do After Effects' (Test-Path (Join-Path $env:APPDATA 'Adobe\CEP\extensions\com.iug.figma2ae\CSXS\manifest.xml'));" ^

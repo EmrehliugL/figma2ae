@@ -5,7 +5,8 @@
 "use strict";
 const https = require("https"), http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), crypto = require("crypto");
 
-const DOCS = path.join(os.homedir(), "Documents", "Figma2AE");
+let PATHS = null; try { PATHS = require("./paths.js"); } catch (e) {}
+const DOCS = PATHS ? PATHS.docs() : path.join(os.homedir(), "Documents", "Figma2AE");
 const DEFAULT_SOURCE = "https://github.com/EmrehliugL/figma2ae/releases/latest/download/";
 
 function source() {
@@ -105,7 +106,12 @@ function create(o) {
       // cópia de segurança da extensão atual (volta manual em caso de problema)
       const bak = path.join(docsDir, "_update", "backup_" + st.current);
       fs.rmSync(bak, { recursive: true, force: true }); copyDir(o.extDir, bak);
-      if (fs.existsSync(path.join(work, "plugin"))) copyDir(path.join(work, "plugin"), path.join(docsDir, "figma-plugin"));
+      if (fs.existsSync(path.join(work, "plugin"))) {
+        // o Figma lê o plugin da pasta onde o manifesto foi importado: atualiza todas que existirem
+        const dirs = PATHS ? PATHS.pluginDirs() : [path.join(docsDir, "figma-plugin")];
+        if (!dirs.includes(path.join(docsDir, "figma-plugin")) && fs.existsSync(path.join(docsDir, "figma-plugin", "manifest.json"))) dirs.push(path.join(docsDir, "figma-plugin"));
+        dirs.forEach(d => copyDir(path.join(work, "plugin"), d));
+      }
       if (fs.existsSync(path.join(work, "extension"))) copyDir(path.join(work, "extension"), o.extDir);
       let studio = "sem-mudança";
       const asar = path.join(work, "studio", "app.asar.bin"); // .bin: evita que algum Node com suporte a asar trate como pasta

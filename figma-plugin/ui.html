@@ -127,12 +127,12 @@ async function pingAE() {
   try {
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 1500);
     const r = await fetch(AE_URL + "/ping", { signal: ctl.signal }); clearTimeout(tm);
-    const j = await r.json(); AE.on = j.app === "Figma2AE"; AE.project = j.project || ""; AE.auto = !!j.auto; AE.update = j.update || null;
+    const j = await r.json(); AE.on = j.app === "Figma2AE"; AE.project = j.project || ""; AE.auto = !!j.auto; AE.route = j.route || (j.studio ? "studio" : "panel"); AE.update = j.update || null;
   } catch (e) { AE.on = false; }
   $("#aedot").className = "aedot" + (AE.on ? " on" : "");
   $("#aetxt").textContent = AE.on ? "AE conectado" : "AE desconectado";
   $("#aepill").title = AE.on ? "Painel aberto no After Effects" + (AE.project ? " · " + AE.project : "") : "Abra no After Effects: Janela → Extensões → Figma2AE";
-  $("#aehint").textContent = AE.on ? (AE.auto ? "O After Effects está em modo automático: importa assim que receber." : "Ao enviar, o painel Figma2AE abre no After Effects com os comps pra importar.") : "O After Effects não respondeu. Ele precisa estar aberto (a extensão Figma2AE liga junto com ele). Ou salve o .zip.";
+  $("#aehint").textContent = AE.on ? (AE.route === "studio" ? "Ao enviar, o Figma2AE Studio abre com as telas pra separar as tomadas e montar no After." : AE.auto ? "O After Effects está em modo automático: importa assim que receber." : "Ao enviar, o painel Figma2AE abre no After Effects com os comps pra importar.") : "O After Effects não respondeu. Ele precisa estar aberto (a extensão Figma2AE liga junto com ele). Ou salve o .zip.";
   paintUpdate();
   setBusy(busy);
 }
@@ -307,7 +307,7 @@ onmessage = ev => {
         .then(j => {
           if (!j.ok) throw new Error(j.error || "o painel recusou o pacote");
           status(`Enviado: ${nc} comp${nc > 1 ? "s" : ""}, ${m.count} camadas.`);
-          done("Enviado pro After Effects", j.auto ? "O After Effects está em modo automático: os comps já estão sendo criados." : "O painel <b>Figma2AE</b> abriu no After Effects: confira os comps e clique em <b>Importar</b>.");
+          done(j.route === "studio" ? "Enviado pro Figma2AE Studio" : "Enviado pro After Effects", j.route === "studio" ? "O <b>Figma2AE Studio</b> abriu com as telas: confira as tomadas e clique em <b>Montar no After Effects</b>." : j.auto ? "O After Effects está em modo automático: os comps já estão sendo criados." : "O painel <b>Figma2AE</b> abriu no After Effects: confira os comps e clique em <b>Importar</b>.");
         })
         .catch(e => {
           status("Não consegui enviar: " + e.message); setBusy(false);

@@ -112,7 +112,8 @@ input[type=text],input[type=number],input[type=search],input[type=date],select,t
     <label>Duração (s) <input type="number" id="oDur" value="5" min="0.1" step="0.5"></label>
     <label><input type="checkbox" id="oOpen" checked> Abrir comp ao importar</label>
     <label title="Quando importar vários frames de uma vez"><input type="checkbox" id="oMaster"> MASTER em sequência</label>
-    <label class="full" title="Assim que o Figma enviar, importa tudo sem precisar clicar"><input type="checkbox" id="oAuto"> Importar automaticamente ao receber do Figma</label>
+    <label class="full" title="O que chega do Figma abre no Figma2AE Studio, que separa as tomadas e monta tudo. Desligue para receber aqui no painel."><input type="checkbox" id="oStudio" checked> Mandar pro Figma2AE Studio ao receber (se instalado)</label>
+    <label class="full" title="Assim que o Figma enviar, importa tudo sem precisar clicar (quando não vai pro Studio)"><input type="checkbox" id="oAuto"> Importar automaticamente ao receber do Figma</label>
     <div class="full dc"><label title="Mostra “Jogando After Effects” no seu perfil do Discord enquanto o After estiver aberto"><input type="checkbox" id="dOn"> Discord: mostrar “Jogando After Effects”</label>
       <input type="text" id="dId" placeholder="ID do aplicativo (Discord Developer Portal)" spellcheck="false"><span id="dSt" class="dst"></span></div>
   </div>
@@ -124,7 +125,10 @@ const { Buffer } = require("buffer");
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), zlib = require("zlib");
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const BASE = path.join(os.homedir(), "Documents", "Figma2AE", "Recebidos");
+const EXT_DIR_P = (() => { try { return decodeURIComponent(location.pathname).replace(/^\/([A-Za-z]:)/, "$1").replace(/\/index\.html$/, ""); } catch (e) { return ""; } })();
+const PATHS = (() => { try { return require(EXT_DIR_P + "/paths.js"); } catch (e) { return null; } })();
+const BASE = path.join(PATHS ? PATHS.docs() : path.join(os.homedir(), "Documents", "Figma2AE"), "Recebidos");
+const STUDIO_EXE = PATHS ? PATHS.studioExe() : path.join(process.env.LOCALAPPDATA || "", "Programs", "Figma2AE Studio", "Figma2AE Studio.exe");
 let INBOX = [], hostInfo = null, serverOk = false, serverErr = "", lastPing = 0, busy = false;
 
 /* ---------- ponte com o After Effects ---------- */
@@ -153,7 +157,7 @@ async function pingHost() {
 }
 
 /* ---------- opções ---------- */
-const OPT = ["oFps", "oDur", "oOpen", "oMaster", "oAuto"];
+const OPT = ["oFps", "oDur", "oOpen", "oMaster", "oAuto", "oStudio"];
 try { const o = JSON.parse(localStorage.getItem("f2ae_panel") || "{}"); OPT.forEach(k => { if (o[k] === undefined) return; const el = $("#" + k); if (el.type === "checkbox") el.checked = o[k]; else el.value = o[k]; }); } catch (e) {}
 OPT.forEach(k => $("#" + k).addEventListener("change", () => { const o = {}; OPT.forEach(x => { const el = $("#" + x); o[x] = el.type === "checkbox" ? el.checked : el.value; }); try { localStorage.setItem("f2ae_panel", JSON.stringify(o)); } catch (e) {} try { fs.mkdirSync(BASE, { recursive: true }); fs.writeFileSync(path.join(BASE, "_config.json"), JSON.stringify(o)); } catch (e) {} }));
 function opts() { return { fps: +$("#oFps").value || 30, duration: Math.max(0.1, +$("#oDur").value || 5), states: "guias", master: $("#oMaster").checked, openAfter: $("#oOpen").checked }; }
@@ -249,13 +253,15 @@ function scanInbox(first) {
   render();
   if (first) {
     // painel aberto agora pelo receptor por causa de um pacote que acabou de chegar
-    if ($("#oAuto").checked) fresh.forEach(it => it.status === "new" && Date.now() - it.time < 30000 && importItem(it));
+    if ($("#oAuto").checked && !toStudio()) fresh.forEach(it => it.status === "new" && Date.now() - it.time < 30000 && importItem(it));
   } else {
     toast(`Recebido do Figma: ${fresh[0].comps.length} comp${fresh[0].comps.length > 1 ? "s" : ""}.`);
     const studioOn = (() => { try { return Date.now() - fs.statSync(path.join(BASE, "_studio.json")).mtimeMs < 6000; } catch (e) { return false; } })();
-    if ($("#oAuto").checked && !studioOn) fresh.forEach(it => it.status === "new" && importItem(it));
+    if ($("#oAuto").checked && !studioOn && !toStudio()) fresh.forEach(it => it.status === "new" && importItem(it));
   }
 }
+// com o Studio instalado e a opção ligada, quem cuida do que chega é o Studio (o painel só lista)
+function toStudio() { try { return $("#oStudio").checked && fs.existsSync(STUDIO_EXE); } catch (e) { return false; } }
 function markDone(item) {
   const f = path.join(item.dir, "_meta.json"), m = readJSON(f);
   if (m) { m.status = "done"; try { fs.writeFileSync(f, JSON.stringify(m)); } catch (e) {} }

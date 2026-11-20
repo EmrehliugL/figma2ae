@@ -8,7 +8,10 @@
 const { Buffer } = require("buffer");
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), zlib = require("zlib");
 const PORT = 7452;
-const ROOT = path.join(os.homedir(), "Documents", "Figma2AE");
+const EXT_DIR0 = (() => { try { return decodeURIComponent(location.pathname).replace(/^\/([A-Za-z]:)/, "$1").replace(/\/server\.html$/, ""); } catch (e) { return ""; } })();
+const PATHS = (() => { try { return require(EXT_DIR0 + "/paths.js"); } catch (e) { return null; } })();
+// Documentos de verdade (com OneDrive pode não ser C:\Users\<nome>\Documents): a mesma pasta que o Studio usa
+const ROOT = PATHS ? PATHS.docs() : path.join(os.homedir(), "Documents", "Figma2AE");
 const BASE = path.join(ROOT, "Recebidos");
 const STATE = path.join(BASE, "_estado.json");
 const PANEL_ID = "com.iug.figma2ae.panel";
@@ -28,6 +31,21 @@ function writeState(extra) {
 }
 function studioOpen() { try { return Date.now() - fs.statSync(path.join(BASE, "_studio.json")).mtimeMs < 6000; } catch (e) { return false; } }
 function openPanel() { if (studioOpen()) return; try { window.__adobe_cep__.requestOpenExtension(PANEL_ID, ""); } catch (e) {} }
+/* Para onde vai o que chega do Figma: pro Figma2AE Studio (se instalado e a opção estiver ligada) ou pro painel. */
+function studioExe() { return PATHS ? PATHS.studioExe() : path.join(process.env.LOCALAPPDATA || "", "Programs", "Figma2AE Studio", "Figma2AE Studio.exe"); }
+function routeStudio() { return settings().oStudio !== false && fs.existsSync(studioExe()); }
+function route() { return studioOpen() || routeStudio() ? "studio" : "panel"; }
+let lastLaunch = 0;
+function launchStudio() {
+  if (studioOpen() || Date.now() - lastLaunch < 15000) return;
+  lastLaunch = Date.now();
+  try {
+    const c = require("child_process").spawn(studioExe(), [], { detached: true, stdio: "ignore", windowsHide: false });
+    c.on("error", () => openPanel()); // não abriu o Studio: mostra no painel
+    c.unref();
+  } catch (e) { openPanel(); }
+}
+function deliver() { if (studioOpen()) return; if (routeStudio()) launchStudio(); else openPanel(); }
 
 function unzipTo(buf, dir) {
   let p = 0, n = 0;
@@ -100,7 +118,7 @@ function handler(req, res) {
   if (req.method === "GET" && req.url.startsWith("/ping")) {
     if (Date.now() - lastStateWrite > 1500) { lastStateWrite = Date.now(); writeState(); }
     res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ app: "Figma2AE", ok: hostOk, error: hostErr, project, auto: !!settings().oAuto && !studioOpen(), studio: studioOpen(), update: updState() }));
+    return res.end(JSON.stringify({ app: "Figma2AE", ok: hostOk, error: hostErr, project, auto: !!settings().oAuto && route() === "panel", studio: studioOpen(), route: route(), update: updState() }));
   }
   if (req.method === "POST" && req.url.startsWith("/package")) {
     const chunks = []; let size = 0;
@@ -110,8 +128,9 @@ function handler(req, res) {
         const r = savePackage(Buffer.concat(chunks), decodeURIComponent(req.headers["x-f2ae-name"] || ""));
         writeState({ lastPackage: r.id });
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, comps: r.comps, auto: !!settings().oAuto && !studioOpen(), studio: studioOpen() }));
-        openPanel(); // o painel lê a pasta Recebidos e mostra o pacote novo
+        const to = route();
+        res.end(JSON.stringify({ ok: true, comps: r.comps, auto: !!settings().oAuto && to === "panel", studio: studioOpen(), route: to }));
+        deliver(); // Studio aberto já vê a pasta; senão abre o Studio (ou o painel)
       } catch (e) {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: false, error: e.message }));

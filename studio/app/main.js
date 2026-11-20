@@ -36,7 +36,15 @@ app.whenReady().then(() => {
   beat(); setInterval(beat, 2000);
   setTimeout(() => checarUpd(true), 4000); setInterval(() => checarUpd(true), 6 * 3600e3);
   let tm = 0;
-  try { fs.watch(BASE, () => { clearTimeout(tm); tm = setTimeout(() => win && win.webContents.send("atualizar"), 500); }); } catch (e) {}
+  let known = new Set(); try { known = new Set(fs.readdirSync(BASE)); } catch (e) {}
+  try { fs.watch(BASE, () => { clearTimeout(tm); tm = setTimeout(() => {
+    if (!win) return;
+    win.webContents.send("atualizar");
+    // pacote novo do Figma: traz o Studio pra frente
+    let now = []; try { now = fs.readdirSync(BASE).filter(n => !n.startsWith("_")); } catch (e) {}
+    const fresh = now.filter(n => !known.has(n)); now.forEach(n => known.add(n));
+    if (fresh.length) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); win.flashFrame(true); }
+  }, 500); }); } catch (e) {}
 });
 app.on("window-all-closed", () => { try { fs.unlinkSync(path.join(BASE, "_studio.json")); } catch (e) {} app.quit(); });
 

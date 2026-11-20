@@ -15,7 +15,10 @@ set "AUTO=0"
 if /i "%~1"=="/auto" set "AUTO=1"
 if /i "%~1"=="--auto" set "AUTO=1"
 
-set "DOCS=%USERPROFILE%\Documents\Figma2AE"
+rem pasta Documentos de verdade (com OneDrive ela nao e %USERPROFILE%\Documents)
+for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('MyDocuments')"`) do set "MYDOCS=%%D"
+if not defined MYDOCS set "MYDOCS=%USERPROFILE%\Documents"
+set "DOCS=%MYDOCS%\Figma2AE"
 set "EXT=%APPDATA%\Adobe\CEP\extensions\com.iug.figma2ae"
 set "STUDIO=%LOCALAPPDATA%\Programs\Figma2AE Studio"
 if not exist "%DOCS%" mkdir "%DOCS%"

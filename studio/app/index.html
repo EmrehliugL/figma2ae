@@ -144,7 +144,8 @@ async function listar() {
   $("#list").innerHTML = LIST.length ? LIST.map(p => `<div class="pk ${p.id === CUR ? "on" : ""}" data-id="${esc(p.id)}"><span class="st ${p.status === "done" ? "done" : "new"}">${p.status === "done" ? (p.studio ? "montado" : "importado") : "novo"}</span>
       <b>${esc(p.label.replace(/^Sem título - /, ""))}</b><small>${new Date(p.time).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · ${p.comps} frame${p.comps === 1 ? "" : "s"}</small><button class="rm" data-rm="${esc(p.id)}" title="Apagar do disco">🗑</button></div>`).join("")
     : `<div style="color:var(--faint);padding:10px 8px;font-size:12px">Nada recebido ainda.</div>`;
-  if (!CUR && LIST.length && LIST[0].status !== "done") abrir(LIST[0].id);
+  // pacote novo chegando do Figma: abre ele direto (se não estiver no meio de uma montagem)
+  if (LIST.length && LIST[0].status !== "done" && (!CUR || (LIST[0].id !== CUR && LIST[0].time > Date.now() - 60000 && !BUSY))) abrir(LIST[0].id);
 }
 $("#list").addEventListener("click", e => {
   const r = e.target.closest("[data-rm]"); if (r) { e.stopPropagation(); const p = LIST.find(x => x.id === r.dataset.rm); confirmDelete([r.dataset.rm], `Apagar “${esc(p ? p.label : r.dataset.rm)}” do disco?`); return; }
