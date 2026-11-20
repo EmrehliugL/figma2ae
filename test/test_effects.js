@@ -69,12 +69,16 @@ const LIN = { type: "GRADIENT_LINEAR", visible: true, gradientTransform: [[1, 0,
   // texto longo (chat) → uma camada só
   const longTxt = "Olá! ".repeat(40) + "\nfim";
   const d = T("Chat", longTxt, [{ start: 0, end: 200, fills: fade }, { start: 200, end: longTxt.length, fills: full }], { y: 950 });
-  const f = makeNode("FRAME", { name: "2.1", width: 1920, height: 1080, clipsContent: true, fills: [solid(0, 0, 0)] }, [a, b, c, d]);
+  // mesmo estilo em tudo (o beat seguinte do mesmo título) → também uma camada por linha
+  const e = T("Mesmo estilo", "No violations found?", null, { y: 300, _wrapWords: true, fills: full });
+  const f = makeNode("FRAME", { name: "2.1", width: 1920, height: 1080, clipsContent: true, fills: [solid(0, 0, 0)] }, [a, b, c, d, e]);
   const page = makeNode("PAGE", { name: "P2" }, [f]);
   M.install(page); page.selection = [f];
   P.describeTargets(P.resolveTargets(page.selection));
   const pkg = JSON.parse((await P.exportFrames({ options: {} })).manifest);
-  const [la, lb, lc, ld] = pkg.comps[0].layers;
+  const [la, lb, lc, ld, le] = pkg.comps[0].layers;
+  assert.strictEqual(le.kind, "group"); assert.deepStrictEqual(le.children.map(k => k.name), ["No", "violations", "found?"]);
+  assert.deepStrictEqual(le.children.map(k => k.colorAlpha), [1, 1, 1]);
   for (const g of [la, lb]) {
     assert.strictEqual(g.kind, "group", g.name + " vira grupo de fileiras");
     assert.deepStrictEqual(g.children.map(k => k.text), ["No", "violations", "found?"]);

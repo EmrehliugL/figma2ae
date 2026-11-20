@@ -117,6 +117,7 @@ O plugin entende contêineres dentro de contêineres (ex.: um "Loop option 2" co
 | **Fundo do frame** | Inclui o fundo do frame. |
 | **Continuidade nos comentários** | Em telas da mesma cena, cada camada diz no comentário se é nova, igual ou mudou em relação à tela anterior. |
 | **Vetores pesados viram imagem** | Vetores com centenas de formas (campos de pontos, retratos pontilhados) entram como imagem em alta. A importação fica muito mais rápida e o After mais leve. Desmarque se precisar deles editáveis. |
+| **Títulos em uma camada por linha** | Títulos curtos viram uma camada de texto por linha (presas a um nulo), pra animar linha a linha. Desmarque pra manter o título numa camada só. |
 | **Qualidade das imagens** | Resolução das imagens exportadas (2x é o equilíbrio). |
 
 - **Enviar pro After Effects:** manda direto para o After aberto.
@@ -140,7 +141,7 @@ Fica em **Janela → Extensões → Figma2AE**.
 - Textos viram **texto editável**, com a mesma fonte, tamanho, cor e entrelinha.
 - Fotos entram na resolução original. Gradientes e texturas de fundo são **recriados com efeitos nativos** (Gradient Ramp, máscaras, Motion Tile) sempre que possível.
 - Efeitos simples também viram recursos nativos e editáveis: **sombra** (Drop Shadow), **sombra interna** (Estilo de Camada > Sombra Interna), **desfoque** (Fast Box Blur, leve), **desfoque de fundo** (camada de ajuste com Fast Box Blur recortada pela forma), **contorno** (Stroke de verdade) e **máscara** (“Use as mask” vira track matte de alfa ou luminância).
-- Títulos curtos com fileiras de estilo diferente (ex.: uma palavra apagadinha e outra forte, cada uma numa linha) entram como **uma camada de texto por fileira**, na posição exata do Figma e presas a um nulo. Textos longos (parágrafos, falas de chat) continuam numa camada só.
+- **Títulos curtos** (até ~120 caracteres, de 2 a 6 linhas) entram como **uma camada de texto por linha**, cada uma com o próprio estilo (ex.: uma palavra apagadinha e outra forte), na posição exata do Figma e presas a um nulo com o nome do título. O mesmo título tem as mesmas camadas em todos os beats, pronto pra animar linha a linha. Textos longos (parágrafos, falas de chat) continuam numa camada só. Dá pra desligar em **Títulos em uma camada por linha**.
 - Depois de atualizar, **feche e abra o plugin no Figma** — o Figma só carrega a versão nova quando o plugin é aberto de novo (o próprio plugin avisa).
 - Grupos ganham **um nulo** só quando ajuda (grupos de cima com 2 ou mais itens), sem poluir a timeline.
 - Frames que recortam o conteúdo viram **precomp**, com recorte arredondado quando têm canto.
