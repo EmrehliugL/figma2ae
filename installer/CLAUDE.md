@@ -58,7 +58,6 @@ Cada linha sai como `[OK]` ou `[FALTA]`, e o código de saída é `0` quando est
 - Não altere configurações do sistema além da chave `PlayerDebugMode` do usuário que o instalador já grava.
 - Não apague nada de `Documentos\Figma2AE` (histórico, Biblioteca, configurações) sem a pessoa pedir.
 - Não mexa no projeto do After Effects dela sem pedir.
-- Discord ("Jogando After Effects") é opcional e precisa de um Application ID criado na conta dela. Só toque nisso se ela pedir; as instruções estão no tutorial.
 
 ## Problemas comuns
 | Sintoma | O que fazer |

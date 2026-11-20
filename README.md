@@ -13,7 +13,7 @@ Quem já tem instalado não precisa baixar de novo: quando sai uma versão, apar
 | Pasta | O que é |
 |---|---|
 | `figma-plugin/` | Plugin do Figma (escolhe os frames e envia pro After) |
-| `extension/` | Extensão CEP do After Effects: painel, receptor na porta 7452, atualizador e Discord |
+| `extension/` | Extensão CEP do After Effects: painel, receptor na porta 7452 e atualizador |
 | `after-effects/` | Biblioteca ExtendScript que monta as comps (também funciona como script avulso) |
 | `studio/app/` | Figma2AE Studio (Electron): monta tomadas automaticamente |
 | `installer/` | Instalador, verificador, tutorial e guia de pastas que vão no zip |

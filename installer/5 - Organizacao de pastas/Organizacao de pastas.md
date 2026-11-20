@@ -18,7 +18,6 @@ Documentos\Figma2AE\
 │   └── _estado.json        ← status do receptor (não apague)
 ├── Biblioteca\             ← cópia das imagens usadas nos projetos do After
 │   └── <nome do arquivo do Figma>\
-└── discord.json            ← configuração do Discord (se você usar)
 ```
 
 **Recebidos** é o histórico. Pode apagar à vontade pelos botões **Apagar importados…** (painel do After) ou **Apagar montados / Apagar tudo** (Studio).

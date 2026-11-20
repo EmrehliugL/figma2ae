@@ -20,7 +20,7 @@ No Figma, selecione os frames, rode o plugin Figma2AE e clique em
 "Enviar pro After Effects". As comps aparecem no After.
 
 O passo a passo completo (instalacao manual, uso do plugin, do painel,
-do Figma2AE Studio, Discord e problemas comuns) esta em:
+do Figma2AE Studio e problemas comuns) esta em:
    Tutorial\Tutorial Figma2AE.pdf
 
 O QUE TEM AQUI

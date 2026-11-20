@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="com.iug.figma2ae" ExtensionBundleVersion="2.3.3" ExtensionBundleName="Figma2AE"
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.iug.figma2ae" ExtensionBundleVersion="2.3.4" ExtensionBundleName="Figma2AE"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.iug.figma2ae.panel" Version="2.3.3" />
-    <Extension Id="com.iug.figma2ae.server" Version="2.3.3" />
+    <Extension Id="com.iug.figma2ae.panel" Version="2.3.4" />
+    <Extension Id="com.iug.figma2ae.server" Version="2.3.4" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>

@@ -15,7 +15,7 @@ const ROOT = PATHS ? PATHS.docs() : path.join(os.homedir(), "Documents", "Figma2
 const BASE = path.join(ROOT, "Recebidos");
 const STATE = path.join(BASE, "_estado.json");
 const PANEL_ID = "com.iug.figma2ae.panel";
-let hostOk = false, hostErr = "", project = "", lastStateWrite = 0, discord = { status: "parado" };
+let hostOk = false, hostErr = "", project = "", lastStateWrite = 0;
 
 function evalAE(script) { return new Promise(res => { if (!window.__adobe_cep__) return res(""); window.__adobe_cep__.evalScript(script, r => res(r)); }); }
 const EXT_DIR = (() => { try { return decodeURIComponent(location.pathname).replace(/^\/([A-Za-z]:)/, "$1").replace(/\/server\.html$/, ""); } catch (e) { return ""; } })();
@@ -27,7 +27,7 @@ async function checkHost() {
 }
 function settings() { try { return JSON.parse(fs.readFileSync(path.join(BASE, "_config.json"), "utf8")); } catch (e) { return {}; } }
 function writeState(extra) {
-  try { fs.mkdirSync(BASE, { recursive: true }); fs.writeFileSync(STATE, JSON.stringify(Object.assign({ server: true, port: PORT, lastPing: Date.now(), hostOk, hostErr, project, discord }, extra || {}))); } catch (e) {}
+  try { fs.mkdirSync(BASE, { recursive: true }); fs.writeFileSync(STATE, JSON.stringify(Object.assign({ server: true, port: PORT, lastPing: Date.now(), hostOk, hostErr, project }, extra || {}))); } catch (e) {}
 }
 function studioOpen() { try { return Date.now() - fs.statSync(path.join(BASE, "_studio.json")).mtimeMs < 6000; } catch (e) { return false; } }
 function openPanel() { if (studioOpen()) return; try { window.__adobe_cep__.requestOpenExtension(PANEL_ID, ""); } catch (e) {} }
@@ -173,13 +173,6 @@ function listen(host) {
   const r = await listen("127.0.0.1");
   listen("::1");
   writeState({ server: !r.err, serverErr: r.err ? (r.err.code === "EADDRINUSE" ? "porta " + PORT + " em uso" : r.err.message) : "", lastPing: 0 });
-  // Discord: "Jogando After Effects" enquanto o After estiver aberto
-  try {
-    require(EXT_DIR + "/discord.js").start({ onStatus: st => {
-      discord = st;
-      try { const cur = JSON.parse(fs.readFileSync(STATE, "utf8")); cur.discord = st; fs.writeFileSync(STATE, JSON.stringify(cur)); } catch (e) {}
-    } });
-  } catch (e) { discord = { status: "erro", error: e.message }; }
   await checkHost();
   setInterval(checkHost, 15000);
   // procura atualização logo depois de abrir e a cada 6 h; troca o Studio pendente quando ele fechar

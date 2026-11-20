@@ -74,9 +74,6 @@ input[type=checkbox]{accent-color:var(--beige2);width:14px;height:14px;margin:0;
 .modal p{margin:8px 0;color:#d0d0d0;font-size:12px}.modal p.small{color:#8c8c8c;font-size:11px}
 .modal .row{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 .btn.danger{background:#b3372f;border-color:#b3372f;color:#fff}.btn.danger:hover{background:#cc4339}
-.dc{display:flex;flex-wrap:wrap;align-items:center;gap:6px;border-top:1px solid var(--line2);padding-top:7px;margin-top:2px}
-.dc input[type=text]{flex:1;min-width:150px;background:#1e1e1e;border:1px solid #3a3a3a;border-radius:4px;padding:3px 6px;color:var(--text);font-size:11px}
-.dst{font-size:10.5px;color:var(--muted)}.dst.on{color:#5ec07a}.dst.bad{color:#e0795e}
 .upd{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#1d3550;border-bottom:1px solid #2d8ceb66;font-size:11.5px}
 .upd .t{flex:1;min-width:0}.upd .t b{color:#fff}.upd .t small{display:block;color:#a9c7e8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .upd button{background:#2d8ceb;border:0;color:#fff;border-radius:4px;padding:5px 10px;font-weight:600;cursor:pointer}
@@ -136,8 +133,6 @@ input[type=text],input[type=number],input[type=search],input[type=date],select,t
     <label title="Quando importar vários frames de uma vez"><input type="checkbox" id="oMaster"> MASTER em sequência</label>
     <label class="full" title="O que chega do Figma abre no Figma2AE Studio, que separa as tomadas e monta tudo. Desligue para receber aqui no painel."><input type="checkbox" id="oStudio" checked> Mandar pro Figma2AE Studio ao receber (se instalado)</label>
     <label class="full" title="Assim que o Figma enviar, importa tudo sem precisar clicar (quando não vai pro Studio)"><input type="checkbox" id="oAuto"> Importar automaticamente ao receber do Figma</label>
-    <div class="full dc"><label title="Mostra “Jogando After Effects” no seu perfil do Discord enquanto o After estiver aberto"><input type="checkbox" id="dOn"> Discord: mostrar “Jogando After Effects”</label>
-      <input type="text" id="dId" placeholder="ID do aplicativo (Discord Developer Portal)" spellcheck="false"><span id="dSt" class="dst"></span></div>
   </div>
 </div>
 <script>
@@ -305,17 +300,7 @@ function paintConn() {
   else { t.textContent = "aguardando o Figma"; $("#pill").title = "Abra o plugin Figma2AE no Figma (Plugins → Desenvolvimento → Figma2AE)."; }
 }
 setInterval(readState, 2000);
-/* ---------- Discord (o receptor em segundo plano é quem conecta; aqui só a configuração) ---------- */
-const DCFG = path.join(BASE, "..", "discord.json");
-(() => { const c = readJSON(DCFG) || {}; $("#dOn").checked = c.enabled !== false && !!c.clientId; $("#dId").value = c.clientId || ""; })();
-function saveDiscord() { const id = $("#dId").value.replace(/\D/g, ""); $("#dId").value = id; try { fs.mkdirSync(path.dirname(DCFG), { recursive: true }); fs.writeFileSync(DCFG, JSON.stringify({ clientId: id, enabled: $("#dOn").checked })); } catch (e) {} paintDiscord(); }
-$("#dOn").onchange = saveDiscord; $("#dId").onchange = saveDiscord;
-function paintDiscord() {
-  const st = (readJSON(STATE) || {}).discord || {}, el = $("#dSt");
-  const txt = { mostrando: "✓ aparecendo no Discord", "discord fechado": "Discord fechado", "sem ID": "cole o ID", desligado: "desligado", erro: "erro: " + (st.error || "") , parado: "" }[st.status] || st.status || "";
-  el.textContent = !$("#dOn").checked ? "" : txt; el.className = "dst " + (st.status === "mostrando" ? "on" : st.status === "erro" ? "bad" : "");
-}
-setInterval(paintDiscord, 2000);
+
 /* versão da extensão no cabeçalho */
 function paintVersion() { try { const v = JSON.parse(fs.readFileSync(path.join(EXT_DIR_P, "version.json"), "utf8")).version; $("#vchip").textContent = "v" + v; } catch (e) { $("#vchip").textContent = ""; } }
 paintVersion();

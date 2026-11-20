@@ -161,19 +161,6 @@ Use quando a cena é uma sequência: por exemplo, a mesma pessoa falando e só o
 
 Para limpar o histórico: **🗑** em cada pacote (passe o mouse), **Apagar montados** ou **Apagar tudo**, sempre com confirmação.
 
-## Discord: "Jogando After Effects" (opcional)
-
-A extensão consegue mostrar **"Jogando After Effects"** no seu perfil do Discord enquanto o After estiver aberto, sem mostrar mais nada. Há dois jeitos:
-
-**Jeito simples (sem código):** no Discord, **Configurações → Jogos registrados → Adicione-o!**, com o After aberto, e escolha o After Effects. Daí em diante aparece sozinho.
-
-**Pela extensão:**
-
-1. Entre em **discord.com/developers/applications**, clique em **New Application** e dê o nome **After Effects** (é esse nome que aparece no "Jogando…").
-2. Copie o **Application ID**.
-3. No painel Figma2AE do After, embaixo das opções, cole o ID e marque **Discord: mostrar "Jogando After Effects"**.
-4. Reabra o After uma vez. Ao lado aparece **✓ aparecendo no Discord**.
-
 ---
 
 # Problemas comuns

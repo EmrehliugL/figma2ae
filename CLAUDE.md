@@ -4,7 +4,7 @@ Projeto do Iug (motion designer, fala português do Brasil, informal). Ele quer 
 
 ## Estrutura
 - `figma-plugin/` (`code.js` lógica, `ui.html` interface). O Figma lê os arquivos do disco a cada execução.
-- `extension/` (CEP, id `com.iug.figma2ae`): `index.html` painel, `server.html` receptor escondido (porta 7452, endpoints `/ping`, `/package`, `/build`, `/update/check|status|apply`), `updater.js`, `discord.js`, `host/host.jsx`, `jsx/Figma2AE.jsx` (cópia de `after-effects/Figma2AE.jsx`).
+- `extension/` (CEP, id `com.iug.figma2ae`): `index.html` painel, `server.html` receptor escondido (porta 7452, endpoints `/ping`, `/package`, `/build`, `/update/check|status|apply`), `updater.js`, `host/host.jsx`, `jsx/Figma2AE.jsx` (cópia de `after-effects/Figma2AE.jsx`).
 - `after-effects/Figma2AE.jsx`: monta comps (ES3/ExtendScript). Recarregado a cada importação.
 - `studio/app/`: Electron (`engine.js` análise de tomadas, `main.js`, `index.html`). Tem o botão **"Atualizar tudo"** na barra de título: atualiza plugin do Figma + extensão do After + o próprio Studio (reinicia sozinho). `studio/app/updater.js` é cópia de `extension/updater.js` (o `publicar.py` copia).
 - `extension/paths.js`: pasta Documentos de verdade (registro do Windows; com OneDrive não é `%USERPROFILE%\Documents`). Use sempre ela pra `Figma2AE\Recebidos`, Biblioteca etc. O Studio usa `app.getPath("documents")`, que é a mesma.
@@ -12,7 +12,7 @@ Projeto do Iug (motion designer, fala português do Brasil, informal). Ele quer 
 - `installer/`: arquivos do zip de instalação (`INSTALAR.bat` aceita `/auto`; `installer/CLAUDE.md` é o roteiro de instalação para outro Claude, diferente deste arquivo).
 
 ## Testes
-`node test/test_export.js`, `test_analysis.js`, `test_studio.js`, `test_panel.js` (precisa de jsdom), `test_discord.js`, `test_update.js <pasta dist/versão>`, `test_ae.js`.
+`node test/test_export.js`, `test_analysis.js`, `test_studio.js`, `test_panel.js` (precisa de jsdom), `test_update.js <pasta dist/versão>`, `test_ae.js`.
 
 ## Publicar uma versão (atualização automática pra todo mundo)
 1. `python3 tools/publicar.py X.Y.Z "o que mudou"`: carimba a versão em `extension/version.json`, `after-effects/Figma2AE.jsx`, `CSXS/manifest.xml`, `studio/app/package.json` e gera `dist/`.
