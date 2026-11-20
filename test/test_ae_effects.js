@@ -56,7 +56,7 @@ assert.deepStrictEqual(names, ["Vidro", "Vidro · forma do desfoque", "Vidro · 
 assert.strictEqual(runL.matte.type, "LUMA"); assert.strictEqual(runL.matte.layer.name, "Fade · máscara"); assert.strictEqual(runL.matte.layer.enabled, false);
 const adj = comp._ls[2];
 assert.strictEqual(adj.adjustmentLayer, true); assert.strictEqual(adj.matte.layer, comp._ls[1]); assert.strictEqual(comp._ls[1].parent, glassL);
-assert.strictEqual(adj.property("ADBE Effect Parade").property("ADBE Gaussian Blur 2").property("ADBE Gaussian Blur 2-0001").value, 30);
+assert.strictEqual(adj.property("ADBE Effect Parade").property("ADBE Box Blur2").property("ADBE Box Blur2-0001").value, 15);
 // sombra interna aplicada no fim, pelo Estilo de Camada
 flushStyles(ctx);
 assert.deepStrictEqual(executed, [9001]);

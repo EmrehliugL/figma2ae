@@ -7,7 +7,7 @@
  *  e ative Preferências > Scripting e Expressões > "Permitir que scripts gravem arquivos e acessem a rede".
  */
 (function F2AE(thisObj) {
-    var VERSION = "2.3.7";
+    var VERSION = "2.3.8";
     var SETTINGS = "Figma2AE";
     var IS_WIN = $.os.toLowerCase().indexOf("windows") >= 0;
 
@@ -222,6 +222,15 @@
         if (scale255) { var max = 255; try { if (p.hasMax) max = p.maxValue; } catch (e) {} value = max <= 100.5 ? value * 100 : value * 255; }
         try { p.setValue(value); } catch (e) {}
     }
+    /* desfoque = Fast Box Blur (bem mais leve que o Gaussian). O raio do Figma equivale a um desvio de raio/2
+       (é o que o Figma exporta como CSS blur); box blur com 3 iterações e raio = desvio dá praticamente a mesma curva */
+    function addBoxBlur(parade, figmaRadius, repeatEdges) {
+        var e = parade.addProperty("ADBE Box Blur2");
+        setByMatch(e, "ADBE Box Blur2-0001", Math.max(0, figmaRadius / 2));
+        setByMatch(e, "ADBE Box Blur2-0002", 3);
+        if (repeatEdges) setByMatch(e, "ADBE Box Blur2-0004", 1);
+        return e;
+    }
     function addEffect(layer, fx, ctx) {
         var parade = layer.property("ADBE Effect Parade");
         try {
@@ -234,8 +243,7 @@
                 setByMatch(e, "ADBE Drop Shadow-0004", Math.sqrt(fx.dx * fx.dx + fx.dy * fx.dy));
                 setByMatch(e, "ADBE Drop Shadow-0005", fx.radius);
             } else if (fx.type === "blur") {
-                var b = parade.addProperty("ADBE Gaussian Blur 2");
-                setByMatch(b, "ADBE Gaussian Blur 2-0001", fx.radius);
+                addBoxBlur(parade, fx.radius, false);
                 if (fx.progressive && ctx) ctx.notes.push((layer.name || "?") + ": desfoque progressivo do Figma virou desfoque uniforme");
             } else if (fx.type === "inner") {
                 // sombra interna = Estilo de Camada "Inner Shadow" (precisa da comp aberta; aplicado no fim da montagem)
@@ -244,7 +252,7 @@
             // "bgblur" é montado em addBgBlur (camada de ajuste atrás da camada)
         } catch (err) {}
     }
-    /* desfoque de fundo: camada de ajuste com Gaussian Blur logo abaixo, recortada pela forma da camada */
+    /* desfoque de fundo: camada de ajuste com Fast Box Blur logo abaixo, recortada pela forma da camada */
     function addBgBlur(comp, layer, spec, ctx) {
         var fx = null; each(spec.effects || [], function (e) { if (e.type === "bgblur") fx = e; });
         if (!fx) return;
@@ -252,9 +260,7 @@
         var adj = comp.layers.addSolid([1, 1, 1], nm + " · desfoque de fundo", comp.width, comp.height, comp.pixelAspect || 1, comp.duration);
         adj.adjustmentLayer = true;
         try { adj.source.parentFolder = ctx.fOther; } catch (e) {}
-        var gb = adj.property("ADBE Effect Parade").addProperty("ADBE Gaussian Blur 2");
-        setByMatch(gb, "ADBE Gaussian Blur 2-0001", fx.radius);
-        setByMatch(gb, "ADBE Gaussian Blur 2-0003", 1); // repetir pixels da borda
+        addBoxBlur(adj.property("ADBE Effect Parade"), fx.radius, true);
         adj.moveAfter(layer);
         var sh = spec.bgShape || { prim: "rect", w: spec.w, h: spec.h, radius: 0 };
         var m = shapeMatte(comp, sh, 0, 0);

@@ -812,9 +812,13 @@ Exporter.prototype.childSpecs = async function (kids, abs, depth, w, h, pad, onE
 var SPLIT_MAX_CHARS = 160, SPLIT_MAX_PIECES = 8;
 function textStyleKey(s) { return JSON.stringify([s.fontName, s.fontSize, visiblePaints(s.fills).map(paintSig)]); }
 Exporter.prototype.textMaybeSplit = async function (node, base, containerAbs) {
-  var pieces = null;
-  try { pieces = await this.textPieces(node); } catch (e) { pieces = null; }
-  if (!pieces || pieces.length < 2) return this.textSpec(node, base, containerAbs);
+  var pieces = null, why = "";
+  try { pieces = await this.textPieces(node); } catch (e) { pieces = null; why = String(e && e.message || e); }
+  if (!pieces || pieces.length < 2) {
+    var one = await this.textSpec(node, base, containerAbs);
+    if (why) one.notes.push("não deu pra separar as fileiras (" + why + ")");
+    return one;
+  }
   var g = { kind: "group", name: node.name, figmaType: "TEXT", figmaId: node.id, xf: base.xf, w: base.w, h: base.h, opacity: 1, blend: "NORMAL", effects: [], notes: [], children: [] };
   var at = node.absoluteTransform;
   for (var i = 0; i < pieces.length; i++) {
@@ -824,7 +828,10 @@ Exporter.prototype.textMaybeSplit = async function (node, base, containerAbs) {
       if (pc.end < cl.characters.length) cl.deleteCharacters(pc.end, cl.characters.length);
       if (pc.start > 0) cl.deleteCharacters(0, pc.start);
       // mesmo ponto do original, descido "top" px no eixo vertical do próprio texto (vale com rotação)
-      cl.relativeTransform = [[at[0][0], at[0][1], at[0][2] + at[0][1] * pc.top], [at[1][0], at[1][1], at[1][2] + at[1][1] * pc.top]];
+      var want = { a: at[0][0], c: at[0][1], tx: at[0][2] + at[0][1] * pc.top, b: at[1][0], d: at[1][1], ty: at[1][2] + at[1][1] * pc.top };
+      var par = cl.parent && cl.parent.type !== "PAGE" && cl.parent.absoluteTransform ? m2o(cl.parent.absoluteTransform) : null;
+      var rel = par ? mul(inv(par), want) : want; // o clone pode nascer dentro do pai original ou na página
+      cl.relativeTransform = [[rel.a, rel.c, rel.tx], [rel.b, rel.d, rel.ty]];
       var fx = supportedEffects(node), b = this.baseOf(cl, containerAbs, fx);
       b.name = pc.label; b.opacity = base.opacity; b.blend = base.blend; b.figmaId = node.id;
       if (base.bgShape) b.bgShape = bgBlurShape(cl);

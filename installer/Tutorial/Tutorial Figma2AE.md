@@ -139,8 +139,9 @@ Fica em **Janela → Extensões → Figma2AE**.
 - Retângulos, elipses e vetores viram **shape layers**, com **Stroke nativo** (espessura, pontas, junções, tracejado, por dentro ou por fora).
 - Textos viram **texto editável**, com a mesma fonte, tamanho, cor e entrelinha.
 - Fotos entram na resolução original. Gradientes e texturas de fundo são **recriados com efeitos nativos** (Gradient Ramp, máscaras, Motion Tile) sempre que possível.
-- Efeitos simples também viram recursos nativos e editáveis: **sombra** (Drop Shadow), **sombra interna** (Estilo de Camada > Sombra Interna), **desfoque** (Gaussian Blur), **desfoque de fundo** (camada de ajuste com Gaussian Blur recortada pela forma), **contorno** (Stroke de verdade) e **máscara** (“Use as mask” vira track matte de alfa ou luminância).
+- Efeitos simples também viram recursos nativos e editáveis: **sombra** (Drop Shadow), **sombra interna** (Estilo de Camada > Sombra Interna), **desfoque** (Fast Box Blur, leve), **desfoque de fundo** (camada de ajuste com Fast Box Blur recortada pela forma), **contorno** (Stroke de verdade) e **máscara** (“Use as mask” vira track matte de alfa ou luminância).
 - Títulos curtos com fileiras de estilo diferente (ex.: uma palavra apagadinha e outra forte, cada uma numa linha) entram como **uma camada de texto por fileira**, na posição exata do Figma e presas a um nulo. Textos longos (parágrafos, falas de chat) continuam numa camada só.
+- Depois de atualizar, **feche e abra o plugin no Figma** — o Figma só carrega a versão nova quando o plugin é aberto de novo (o próprio plugin avisa).
 - Grupos ganham **um nulo** só quando ajuda (grupos de cima com 2 ou mais itens), sem poluir a timeline.
 - Frames que recortam o conteúdo viram **precomp**, com recorte arredondado quando têm canto.
 
