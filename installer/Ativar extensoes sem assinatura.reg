@@ -1,0 +1,16 @@
+Windows Registry Editor Version 5.00
+
+; Permite que o After Effects carregue extensoes CEP sem assinatura (como a Figma2AE).
+; Vale so para o seu usuario. O INSTALAR.bat ja faz isso; use este arquivo so na instalacao manual.
+
+[HKEY_CURRENT_USER\Software\Adobe\CSXS.9]
+"PlayerDebugMode"="1"
+
+[HKEY_CURRENT_USER\Software\Adobe\CSXS.10]
+"PlayerDebugMode"="1"
+
+[HKEY_CURRENT_USER\Software\Adobe\CSXS.11]
+"PlayerDebugMode"="1"
+
+[HKEY_CURRENT_USER\Software\Adobe\CSXS.12]
+"PlayerDebugMode"="1"

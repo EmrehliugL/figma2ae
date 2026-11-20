@@ -1,0 +1,37 @@
+FIGMA2AE  -  versao 2.3
+=======================
+
+Leva as telas do Figma para o After Effects como camadas nativas e editaveis.
+
+INSTALAR (3 minutos)
+1. Feche o After Effects e o Figma2AE Studio.
+2. Extraia este zip (botao direito > Extrair tudo).
+3. De dois cliques em INSTALAR.bat.
+4. No Figma de desktop: Plugins > Desenvolvimento > Importar plugin do manifesto...
+   e escolha  Documentos\Figma2AE\figma-plugin\manifest.json
+5. Abra o After Effects: Janela > Extensoes > Figma2AE.
+
+QUER QUE O CLAUDE INSTALE PRA VOCE?
+Abra PROMPT PARA O CLAUDE.txt e siga as instrucoes (funciona com o
+Claude Code ou com o app do Claude com acesso ao computador).
+
+USAR
+No Figma, selecione os frames, rode o plugin Figma2AE e clique em
+"Enviar pro After Effects". As comps aparecem no After.
+
+O passo a passo completo (instalacao manual, uso do plugin, do painel,
+do Figma2AE Studio, Discord e problemas comuns) esta em:
+   Tutorial\Tutorial Figma2AE.pdf
+
+O QUE TEM AQUI
+  INSTALAR.bat                          instalador automatico (aceita /auto)
+  VERIFICAR.bat                         confere se esta tudo instalado
+  DESINSTALAR.bat                       remove extensao e Studio
+  PROMPT PARA O CLAUDE.txt              mensagem pronta pro Claude instalar tudo
+  CLAUDE.md                             instrucoes que o Claude le para instalar
+  1 - Plugin Figma                      plugin do Figma
+  2 - Extensao After Effects            painel + receptor do After Effects
+  3 - Script After Effects (alternativo) script avulso (plano B, sem extensao)
+  4 - Figma2AE Studio                   app que monta as tomadas automaticamente
+  5 - Organizacao de pastas             como as pastas ficam organizadas
+  Tutorial                              tutorial de instalacao e uso (PDF, HTML e MD)

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Figma2AE</title>
+<style>
+:root{
+  --bg:#232323; --panel:#2b2b2b; --panel2:#333333; --panel3:#3c3c3c; --line:#454545; --line2:#303030;
+  --text:#d8d8d8; --muted:#9a9a9a; --faint:#6b6b6b; --beige:#2d8ceb; --beige2:#5aa9f5;
+  --ok:#8ccf9e; --warn:#e7c86b; --bad:#e08a7a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:12px/1.45 "Segoe UI",Inter,system-ui,sans-serif;overflow:hidden;user-select:none}
+button,select,input{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#454545;border-radius:4px}
+.app{display:grid;grid-template-rows:auto auto 1fr auto;height:100%}
+.top{display:flex;align-items:center;gap:8px;padding:10px 12px 8px}
+.logo{width:18px;height:18px;border-radius:4px;background:var(--beige);position:relative;flex:none}
+.logo:after{content:"";position:absolute;inset:5px;border-radius:2px;background:var(--bg)}
+.brand{font-weight:700;color:var(--beige);font-size:13px}
+.pill{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:99px;padding:3px 9px;color:var(--muted);font-size:11px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px #8ccf9e22}
+.dot.bad{background:var(--bad)}
+.bar{display:flex;gap:6px;padding:0 12px 8px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:6px 10px;border-radius:4px;white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--panel2)}
+.btn.primary{background:var(--beige);color:#ffffff;border-color:var(--beige);font-weight:700}
+.btn.primary:hover:not(:disabled){background:#4a9ff0}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover:not(:disabled){color:var(--text);background:var(--panel)}
+.btn.sm{padding:3px 8px;font-size:11px}
+.main{overflow:auto;padding:0 12px 12px}
+.empty{color:var(--muted);text-align:center;padding:34px 12px;line-height:1.7}
+.empty b{color:var(--beige2)}
+.steps{margin:16px 0 0;text-align:left;background:var(--panel);border-radius:4px;padding:10px 12px;font-size:11.5px}
+.steps div{display:flex;gap:8px;margin:5px 0}
+.steps i{font-style:normal;color:var(--bg);background:var(--beige2);border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex:none;margin-top:1px}
+.pkg{background:var(--panel);border-radius:4px;margin-bottom:10px;overflow:hidden;border:1px solid var(--line2)}
+.pkg.done{opacity:.72}
+.ph{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line2)}
+.ph .t{flex:1;min-width:0}
+.ph .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--beige)}
+.ph .t small{color:var(--faint)}
+.grp{color:var(--faint);font-size:10px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;padding:8px 10px 2px}
+.cp{display:grid;grid-template-columns:16px 72px 1fr;gap:9px;align-items:center;padding:6px 10px;cursor:pointer}
+.cp:hover{background:var(--panel2)}
+.cp img,.cp .noimg{width:72px;height:44px;object-fit:contain;background:#151515;border-radius:4px;border:1px solid var(--line2);display:block}
+.cp .nm{min-width:0}
+.cp .nm b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp .nm small{display:block;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tagp{color:var(--warn);font-size:10px;font-weight:700}
+.pf{display:flex;gap:6px;align-items:center;padding:8px 10px;border-top:1px solid var(--line2)}
+.pf .info{color:var(--faint);font-size:11px;margin-right:auto}
+.res{padding:8px 10px;border-top:1px solid var(--line2);font-size:11px;color:var(--muted)}
+.res .ok{color:var(--ok);font-weight:600}
+.res .err{color:var(--bad);font-weight:600}
+.res ul{margin:4px 0 0;padding-left:16px;max-height:120px;overflow:auto}
+.res a{color:var(--beige2);cursor:pointer;text-decoration:underline}
+input[type=checkbox]{accent-color:var(--beige2);width:14px;height:14px;margin:0;cursor:pointer}
+.opts{border-top:1px solid var(--line2);padding:8px 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;background:#1e1e1e}
+.opts label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:11.5px}
+.opts select,.opts input[type=number]{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:2px 4px;color:var(--text);width:70px}
+.opts .full{grid-column:1/-1}
+.spin{display:inline-block;width:10px;height:10px;border:2px solid var(--faint);border-top-color:var(--beige);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:12px;right:12px;bottom:70px;background:#333333;border:1px solid var(--line);border-radius:4px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:11.5px;z-index:9}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:20}
+.modal .box{background:#2b2b2b;border:1px solid #3a3a3a;border-radius:4px;padding:14px;max-width:360px;margin:12px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.modal p{margin:8px 0;color:#d0d0d0;font-size:12px}.modal p.small{color:#8c8c8c;font-size:11px}
+.modal .row{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+.btn.danger{background:#b3372f;border-color:#b3372f;color:#fff}.btn.danger:hover{background:#cc4339}
+.dc{display:flex;flex-wrap:wrap;align-items:center;gap:6px;border-top:1px solid var(--line2);padding-top:7px;margin-top:2px}
+.dc input[type=text]{flex:1;min-width:150px;background:#1e1e1e;border:1px solid #3a3a3a;border-radius:4px;padding:3px 6px;color:var(--text);font-size:11px}
+.dst{font-size:10.5px;color:var(--muted)}.dst.on{color:#5ec07a}.dst.bad{color:#e0795e}
+.upd{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#1d3550;border-bottom:1px solid #2d8ceb66;font-size:11.5px}
+.upd .t{flex:1;min-width:0}.upd .t b{color:#fff}.upd .t small{display:block;color:#a9c7e8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upd button{background:#2d8ceb;border:0;color:#fff;border-radius:4px;padding:5px 10px;font-weight:600;cursor:pointer}
+.upd.ok{background:#1f3b2a}.upd.err{background:#3a2622}
+/* ===== tema After Effects ===== */
+html,body{font-family:"Segoe UI",system-ui,sans-serif}
+::selection{background:#2d8ceb55}
+input[type=checkbox],input[type=radio],input[type=range]{accent-color:#2d8ceb}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:1px solid #2d8ceb;outline-offset:0}
+::-webkit-scrollbar-thumb{background:#454545!important;border-color:transparent!important;border-radius:2px!important}
+/* abas e botões no estilo dos painéis do AE */
+nav button.on,.seg button.on,.tabs button.on,.tab.on{background:#3a3a3a!important;color:#ffffff!important;box-shadow:inset 0 -2px 0 #2d8ceb}
+.btn.primary,button.primary{color:#ffffff!important}
+.btn.primary:hover:not(:disabled),button.primary:hover:not(:disabled){background:#4a9ff0!important;border-color:#4a9ff0!important}
+input[type=text],input[type=number],input[type=search],input[type=date],select,textarea{background-color:#1e1e1e;border-color:#3a3a3a}
+.logo{background:none!important;border-radius:0!important}.logo:after{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <img class="logo" src="data:image/png;base64,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" alt=""><div class="brand">Figma2AE</div>
+    <div class="pill" id="pill"><span class="dot" id="dot"></span><span id="conn">iniciando…</span></div>
+  </div>
+  <div class="bar">
+    <button class="btn" id="openZip" title="Importar um pacote .f2ae.zip salvo pelo plugin">Abrir pacote…</button>
+    <button class="btn ghost" id="clear" title="Apaga do disco os pacotes já importados (as imagens usadas no After ficam salvas na Biblioteca)">Apagar importados…</button>
+    <button class="btn ghost" id="space" title="Abrir a pasta dos pacotes recebidos">📁</button>
+  </div>
+  <div class="upd" id="upd" hidden></div>
+  <div class="main" id="main"></div>
+  <div class="opts">
+    <label>Frame rate <select id="oFps"><option>23.976</option><option>24</option><option>25</option><option>29.97</option><option selected>30</option><option>50</option><option>60</option></select></label>
+    <label>Duração (s) <input type="number" id="oDur" value="5" min="0.1" step="0.5"></label>
+    <label><input type="checkbox" id="oOpen" checked> Abrir comp ao importar</label>
+    <label title="Quando importar vários frames de uma vez"><input type="checkbox" id="oMaster"> MASTER em sequência</label>
+    <label class="full" title="Assim que o Figma enviar, importa tudo sem precisar clicar"><input type="checkbox" id="oAuto"> Importar automaticamente ao receber do Figma</label>
+    <div class="full dc"><label title="Mostra “Jogando After Effects” no seu perfil do Discord enquanto o After estiver aberto"><input type="checkbox" id="dOn"> Discord: mostrar “Jogando After Effects”</label>
+      <input type="text" id="dId" placeholder="ID do aplicativo (Discord Developer Portal)" spellcheck="false"><span id="dSt" class="dst"></span></div>
+  </div>
+</div>
+<script>
+"use strict";
+const PORT = 7452;
+const { Buffer } = require("buffer");
+const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), zlib = require("zlib");
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const BASE = path.join(os.homedir(), "Documents", "Figma2AE", "Recebidos");
+let INBOX = [], hostInfo = null, serverOk = false, serverErr = "", lastPing = 0, busy = false;
+
+/* ---------- ponte com o After Effects ---------- */
+function evalAE(script) {
+  return new Promise(res => {
+    if (!window.__adobe_cep__) return res("");
+    window.__adobe_cep__.evalScript(script, r => res(r));
+  });
+}
+const EXT_DIR = (() => { try { return decodeURIComponent(location.pathname).replace(/^\/([A-Za-z]:)/, "$1").replace(/\/index\.html$/, ""); } catch (e) { return ""; } })();
+let hostLoaded = false;
+async function ensureHost() {
+  if (hostLoaded) return;
+  const hostFile = EXT_DIR + "/host/host.jsx";
+  await evalAE(`try{$.evalFile(new File(${JSON.stringify(hostFile)}))}catch(e){}`);
+  const r = await evalAE(`f2aeLoad(${JSON.stringify(EXT_DIR)})`);
+  try { const j = JSON.parse(r); hostLoaded = !!j.ok; } catch (e) {}
+}
+async function pingHost() {
+  await ensureHost();
+  const r = await evalAE("f2aePing()");
+  const was = JSON.stringify(hostInfo);
+  try { hostInfo = JSON.parse(r); } catch (e) { hostInfo = { ok: false, error: r || "sem resposta do After Effects" }; }
+  paintConn();
+  if (JSON.stringify(hostInfo) !== was) render();
+}
+
+/* ---------- opções ---------- */
+const OPT = ["oFps", "oDur", "oOpen", "oMaster", "oAuto"];
+try { const o = JSON.parse(localStorage.getItem("f2ae_panel") || "{}"); OPT.forEach(k => { if (o[k] === undefined) return; const el = $("#" + k); if (el.type === "checkbox") el.checked = o[k]; else el.value = o[k]; }); } catch (e) {}
+OPT.forEach(k => $("#" + k).addEventListener("change", () => { const o = {}; OPT.forEach(x => { const el = $("#" + x); o[x] = el.type === "checkbox" ? el.checked : el.value; }); try { localStorage.setItem("f2ae_panel", JSON.stringify(o)); } catch (e) {} try { fs.mkdirSync(BASE, { recursive: true }); fs.writeFileSync(path.join(BASE, "_config.json"), JSON.stringify(o)); } catch (e) {} }));
+function opts() { return { fps: +$("#oFps").value || 30, duration: Math.max(0.1, +$("#oDur").value || 5), states: "guias", master: $("#oMaster").checked, openAfter: $("#oOpen").checked }; }
+
+/* ---------- pacotes ---------- */
+function unzipTo(buf, dir) {
+  // lê zip (sem compressão ou deflate) e grava os arquivos
+  let p = 0, n = 0;
+  while (p + 30 <= buf.length && buf.readUInt32LE(p) === 0x04034b50) {
+    const method = buf.readUInt16LE(p + 8), flags = buf.readUInt16LE(p + 6);
+    let csize = buf.readUInt32LE(p + 18);
+    const nlen = buf.readUInt16LE(p + 26), xlen = buf.readUInt16LE(p + 28);
+    const name = buf.slice(p + 30, p + 30 + nlen).toString(flags & 0x800 ? "utf8" : "latin1");
+    const start = p + 30 + nlen + xlen;
+    if (flags & 8 && csize === 0) throw new Error("zip com descritor de dados não suportado; exporte de novo pelo plugin");
+    const raw = buf.slice(start, start + csize);
+    const data = method === 0 ? raw : method === 8 ? zlib.inflateRawSync(raw) : null;
+    if (!data) throw new Error("compressão não suportada no zip");
+    const safe = name.replace(/\\/g, "/").split("/").filter(x => x && x !== ".." && x !== ".").join(path.sep);
+    if (!name.endsWith("/") && safe) { const out = path.join(dir, safe); fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, data); n++; }
+    p = start + csize;
+  }
+  if (!n) throw new Error("pacote vazio ou inválido");
+  return n;
+}
+function stamp() { const d = new Date(), z = x => String(x).padStart(2, "0"); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`; }
+function addPackage(buf, label) {
+  // pacote aberto à mão pelo botão "Abrir pacote…"
+  const id = "local_" + stamp() + "_" + Math.random().toString(36).slice(2, 6);
+  const dir = path.join(BASE, id);
+  fs.mkdirSync(dir, { recursive: true });
+  unzipTo(buf, dir);
+  const pkg = JSON.parse(fs.readFileSync(path.join(dir, "figma2ae.json"), "utf8"));
+  if (pkg.format !== "figma2ae") throw new Error("não é um pacote do Figma2AE");
+  const item = makeItem(id, dir, pkg, label, new Date(), "new");
+  INBOX.unshift(item);
+  render();
+  return item;
+}
+function makeItem(id, dir, pkg, label, time, status) {
+  const comps = (pkg.comps || (pkg.scenes || []).map(s => ({ compName: s.compName, group: "", frameName: s.name, width: s.width, height: s.height, layers: s.layers }))).map((c, i) => ({
+    i, compName: c.compName, group: c.group || "", frameName: c.frameName || "", w: c.width, h: c.height, partial: !!c.partial,
+    ref: c.ref ? path.join(dir, c.ref.file) : null, layers: (c.layers || []).length, on: true
+  }));
+  const seqOf = {}; (pkg.sequences || []).forEach(q => (q.comps || []).forEach(i => seqOf[i] = q.name));
+  comps.forEach(c => c.seq = seqOf[c.i] || "");
+  return { id, dir, label: label || pkg.file || "Figma", page: pkg.page || "", time, pkg, comps, status, result: null };
+}
+async function importItem(item) {
+  if (busy) return;
+  const sel = item.comps.filter(c => c.on);
+  if (!sel.length) { toast("Marque pelo menos um comp."); return; }
+  busy = true; item.status = "importing"; render();
+  try {
+    const pkg = JSON.parse(JSON.stringify(item.pkg));
+    if (pkg.comps) {
+      pkg.comps = sel.map(c => item.pkg.comps[c.i]);
+      const nx = {}; sel.forEach((c, j) => nx[c.i] = j);
+      if (pkg.sequences) pkg.sequences = pkg.sequences.map(q => Object.assign({}, q, { comps: (q.comps || []).filter(i => nx[i] !== undefined).map(i => nx[i]) })).filter(q => q.comps.length > 1);
+    }
+    else pkg.scenes = sel.map(c => item.pkg.scenes[c.i]);
+    const jp = path.join(item.dir, "figma2ae_import_" + Date.now() + ".json");
+    fs.writeFileSync(jp, JSON.stringify(pkg), "utf8");
+    const r = await evalAE(`f2aeImport(${JSON.stringify(jp.replace(/\\/g, "/"))}, ${JSON.stringify(opts())})`);
+    let res; try { res = JSON.parse(r); } catch (e) { res = { ok: false, error: r || "o After Effects não respondeu" }; }
+    item.result = res; item.status = res.ok ? "done" : "error";
+    if (res.ok) markDone(item);
+    if (res.ok) toast(`Importado: ${res.comps} comp${res.comps > 1 ? "s" : ""}${res.sequences ? ` (${res.sequences} em sequência)` : ""}, ${res.layers} camadas, ${res.nulls || 0} nulo${res.nulls === 1 ? "" : "s"} em ${res.seconds.toFixed(1)}s.`);
+  } catch (e) { item.result = { ok: false, error: e.message }; item.status = "error"; }
+  busy = false; render(); pingHost();
+}
+
+/* ---------- pacotes recebidos (o receptor em segundo plano grava em Documentos\Figma2AE\Recebidos) ---------- */
+const STATE = path.join(BASE, "_estado.json");
+function readJSON(f) { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch (e) { return null; } }
+function loadFromDisk(id) {
+  const dir = path.join(BASE, id), meta = readJSON(path.join(dir, "_meta.json")), pkg = readJSON(path.join(dir, "figma2ae.json"));
+  if (!meta || !pkg) return null;
+  return makeItem(id, dir, pkg, meta.label, new Date(meta.time), meta.status === "done" ? "done" : "new");
+}
+function scanInbox(first) {
+  let ids = [];
+  try { ids = fs.readdirSync(BASE).filter(n => !n.startsWith("_") && !n.startsWith("local_")).sort().reverse().slice(0, 25); } catch (e) {}
+  const known = new Set(INBOX.map(i => i.id)), fresh = [];
+  ids.forEach(id => {
+    if (known.has(id)) return;
+    const it = loadFromDisk(id); if (!it) return;
+    if (first && (it.status === "done" || Date.now() - it.time > 12 * 3600e3)) return; // ao abrir, mostra só os pendentes recentes
+    fresh.push(it);
+  });
+  if (!fresh.length) return;
+  INBOX = fresh.concat(INBOX).sort((a, b) => b.time - a.time);
+  render();
+  if (first) {
+    // painel aberto agora pelo receptor por causa de um pacote que acabou de chegar
+    if ($("#oAuto").checked) fresh.forEach(it => it.status === "new" && Date.now() - it.time < 30000 && importItem(it));
+  } else {
+    toast(`Recebido do Figma: ${fresh[0].comps.length} comp${fresh[0].comps.length > 1 ? "s" : ""}.`);
+    const studioOn = (() => { try { return Date.now() - fs.statSync(path.join(BASE, "_studio.json")).mtimeMs < 6000; } catch (e) { return false; } })();
+    if ($("#oAuto").checked && !studioOn) fresh.forEach(it => it.status === "new" && importItem(it));
+  }
+}
+function markDone(item) {
+  const f = path.join(item.dir, "_meta.json"), m = readJSON(f);
+  if (m) { m.status = "done"; try { fs.writeFileSync(f, JSON.stringify(m)); } catch (e) {} }
+}
+function readState() {
+  const st = readJSON(STATE) || {};
+  serverOk = !!st.server; serverErr = st.serverErr || (st.server ? "" : "o receptor não está rodando — feche e abra o After Effects");
+  lastPing = st.lastPing || 0;
+  paintConn();
+}
+
+/* ---------- interface ---------- */
+function paintConn() {
+  const dot = $("#dot"), t = $("#conn");
+  dot.className = "dot";
+  if (hostInfo && !hostInfo.ok) { dot.classList.add("bad"); t.textContent = "erro no script"; $("#pill").title = hostInfo.error || ""; return; }
+  if (!serverOk) { dot.classList.add("bad"); t.textContent = "receptor parado"; $("#pill").title = serverErr; return; }
+  if (Date.now() - lastPing < 8000) { dot.classList.add("on"); t.textContent = "Figma conectado"; $("#pill").title = "O plugin do Figma está aberto e falando com este painel."; }
+  else { t.textContent = "aguardando o Figma"; $("#pill").title = "Abra o plugin Figma2AE no Figma (Plugins → Desenvolvimento → Figma2AE)."; }
+}
+setInterval(readState, 2000);
+/* ---------- Discord (o receptor em segundo plano é quem conecta; aqui só a configuração) ---------- */
+const DCFG = path.join(BASE, "..", "discord.json");
+(() => { const c = readJSON(DCFG) || {}; $("#dOn").checked = c.enabled !== false && !!c.clientId; $("#dId").value = c.clientId || ""; })();
+function saveDiscord() { const id = $("#dId").value.replace(/\D/g, ""); $("#dId").value = id; try { fs.mkdirSync(path.dirname(DCFG), { recursive: true }); fs.writeFileSync(DCFG, JSON.stringify({ clientId: id, enabled: $("#dOn").checked })); } catch (e) {} paintDiscord(); }
+$("#dOn").onchange = saveDiscord; $("#dId").onchange = saveDiscord;
+function paintDiscord() {
+  const st = (readJSON(STATE) || {}).discord || {}, el = $("#dSt");
+  const txt = { mostrando: "✓ aparecendo no Discord", "discord fechado": "Discord fechado", "sem ID": "cole o ID", desligado: "desligado", erro: "erro: " + (st.error || "") , parado: "" }[st.status] || st.status || "";
+  el.textContent = !$("#dOn").checked ? "" : txt; el.className = "dst " + (st.status === "mostrando" ? "on" : st.status === "erro" ? "bad" : "");
+}
+setInterval(paintDiscord, 2000);
+/* ---------- atualização (quem baixa e instala é o receptor em segundo plano) ---------- */
+let updLocal = null;
+function getJSON(p, method) { return new Promise((ok, bad) => { const r = http.request({ host: "127.0.0.1", port: PORT, path: p, method: method || "GET" }, res => { let b = ""; res.on("data", c => b += c); res.on("end", () => { try { ok(JSON.parse(b)); } catch (e) { bad(e); } }); }); r.on("error", bad); r.setTimeout(method === "POST" ? 300000 : 3000, () => r.destroy(new Error("sem resposta"))); r.end(); }); }
+function paintUpd(u) {
+  const el = $("#upd");
+  if (updLocal) { el.hidden = false; el.className = "upd " + (updLocal.kind || ""); el.innerHTML = `<div class="t">${updLocal.html}</div>` + (updLocal.btn ? `<button id="updgo">${updLocal.btn}</button>` : ""); const b = $("#updgo"); if (b) b.onclick = updLocal.on; return; }
+  if (u && u.busy) { el.hidden = false; el.className = "upd"; el.innerHTML = `<div class="t"><b>Atualizando…</b><small>${esc(u.phase)} ${u.progress ? u.progress + "%" : ""}</small></div>`; return; }
+  if (!u || !u.available) { el.hidden = true; return; }
+  el.hidden = false; el.className = "upd";
+  el.innerHTML = `<div class="t"><b>Atualização v${esc(u.latest)}</b><small title="${esc(u.notes)}">${esc(u.notes || "Melhorias e correções.")} · você tem a v${esc(u.current)}</small></div><button id="updgo">Atualizar</button>`;
+  $("#updgo").onclick = doUpdate;
+}
+async function checkUpd() { if (updLocal && !updLocal.kind) return; try { const j = await getJSON("/ping"); paintUpd(j.update); } catch (e) {} }
+async function doUpdate() {
+  updLocal = { html: "<b>Atualizando…</b><small>baixando e instalando</small>" }; paintUpd();
+  try {
+    const r = await getJSON("/update/apply", "POST");
+    if (!r.ok) throw new Error(r.error || "falhou");
+    updLocal = { kind: "ok", html: `<b>Atualizado pra v${esc(r.version)}!</b><small>Feche e abra o After Effects pra usar a versão nova.${r.studio === "pendente" ? " O Studio atualiza quando você fechar ele." : ""}</small>` };
+  } catch (e) { updLocal = { kind: "err", html: `<b>Não deu pra atualizar</b><small>${esc(e.message)}</small>`, btn: "Tentar de novo", on: () => { updLocal = null; doUpdate(); } }; }
+  paintUpd();
+}
+setInterval(checkUpd, 5000); setTimeout(checkUpd, 1500);
+
+function fileUrl(p) { return "file:///" + p.replace(/\\/g, "/").split("/").map(encodeURIComponent).join("/").replace(/^file:\/\/\/([A-Za-z])%3A/, "file:///$1:"); }
+function render() {
+  const m = $("#main");
+  const banner = hostInfo && !hostInfo.ok ? `<div class="res" style="background:#3a2622;border-radius:4px;margin-bottom:10px;border:0"><span class="err">O script do After Effects não carregou.</span><br>${esc(hostInfo.error || "")}</div>` : "";
+  if (!INBOX.length) {
+    m.innerHTML = banner + `<div class="empty">Nenhum pacote ainda.
+      <div class="steps">
+        <div><i>1</i><span>No Figma, abra o plugin <b>Figma2AE</b>.</span></div>
+        <div><i>2</i><span>Selecione um frame, vários frames, a cena inteira ou objetos.</span></div>
+        <div><i>3</i><span>Clique em <b>Enviar pro After Effects</b>. Os comps aparecem aqui.</span></div>
+        <div><i>4</i><span>Marque o que quer e clique em <b>Importar</b>. Cada frame vira um comp separado.</span></div>
+      </div></div>`;
+    return;
+  }
+  m.innerHTML = banner + INBOX.map((it, k) => {
+    const sel = it.comps.filter(c => c.on).length;
+    const groups = []; const byG = {};
+    it.comps.forEach(c => { const g = c.seq ? "⏵ " + c.seq + " — uma comp só, em sequência" : (c.group || ""); if (!byG[g]) { byG[g] = []; groups.push(g); } byG[g].push(c); });
+    const time = it.time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    let body = groups.map(g => (g ? `<div class="grp">${esc(g)}</div>` : "") + byG[g].map(c => `
+      <label class="cp"><input type="checkbox" data-k="${k}" data-c="${c.i}" ${c.on ? "checked" : ""}>
+        ${c.ref && fs.existsSync(c.ref) ? `<img src="${fileUrl(c.ref)}">` : `<div class="noimg"></div>`}
+        <div class="nm"><b>${esc(c.compName)}</b><small>${esc(c.frameName)} · ${c.w}×${c.h}${c.partial ? ' · <span class="tagp">só objetos</span>' : ""}</small></div></label>`).join("")).join("");
+    let res = "";
+    if (it.status === "importing") res = `<div class="res"><span class="spin"></span> Importando no After Effects…</div>`;
+    else if (it.result && it.result.ok) {
+      const r = it.result;
+      res = `<div class="res"><span class="ok">✓ Importado</span> · ${r.comps} comp${r.comps > 1 ? "s" : ""}, ${r.layers} camadas, ${r.seconds.toFixed(1)}s
+        ${r.names && r.names.length ? `<div style="margin-top:3px">${r.names.map(n => `<a data-open="${esc(n)}">${esc(n)}</a>`).join(" · ")}</div>` : ""}
+        ${r.fonts && r.fonts.length ? `<div style="margin-top:4px;color:var(--warn)">Fontes não instaladas (o AE trocou por outra): ${esc(r.fonts.join(", "))}</div>` : ""}
+        ${r.notes && r.notes.length ? `<details style="margin-top:4px"><summary>${r.notes.length} aviso${r.notes.length > 1 ? "s" : ""}</summary><ul>${r.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}</div>`;
+    } else if (it.result) res = `<div class="res"><span class="err">Erro:</span> ${esc(it.result.error)}</div>`;
+    return `<div class="pkg ${it.status === "done" ? "done" : ""}">
+      <div class="ph"><div class="t"><b>${esc(it.label)}</b><small>${esc(it.page)} · recebido ${time} · ${it.comps.length} comp${it.comps.length > 1 ? "s" : ""}</small></div>
+        <button class="btn ghost sm" data-rm="${k}" title="Apagar este pacote do disco">🗑</button>
+        <button class="btn ghost sm" data-del="${k}" title="Só tirar da lista">✕</button></div>
+      ${body}
+      <div class="pf"><span class="info">${sel} de ${it.comps.length} marcado${it.comps.length > 1 ? "s" : ""}</span>
+        <button class="btn sm ghost" data-all="${k}">${sel === it.comps.length ? "Desmarcar" : "Marcar"} todos</button>
+        <button class="btn primary sm" data-imp="${k}" ${busy || !sel ? "disabled" : ""}>${it.status === "done" ? "Importar de novo" : "Importar"}</button></div>
+      ${res}</div>`;
+  }).join("");
+}
+$("#main").addEventListener("click", e => {
+  const t = e.target.closest("[data-imp],[data-del],[data-rm],[data-all],[data-open]"); if (!t) return;
+  if (t.dataset.rm !== undefined) { const it = INBOX[+t.dataset.rm]; askDelete([it], `Apagar o pacote “${esc(it.label)}” (${it.comps.length} comp${it.comps.length > 1 ? "s" : ""}, ${fmtSize(dirSize(it.dir))}) do disco?`); return; }
+  if (t.dataset.imp !== undefined) importItem(INBOX[+t.dataset.imp]);
+  else if (t.dataset.del !== undefined) { INBOX.splice(+t.dataset.del, 1); render(); }
+  else if (t.dataset.all !== undefined) { const it = INBOX[+t.dataset.all], all = it.comps.every(c => c.on); it.comps.forEach(c => c.on = !all); render(); }
+  else if (t.dataset.open !== undefined) evalAE(`f2aeReveal(${JSON.stringify(t.dataset.open)})`);
+});
+$("#main").addEventListener("change", e => {
+  const t = e.target; if (t.dataset.k === undefined) return;
+  INBOX[+t.dataset.k].comps.find(c => c.i === +t.dataset.c).on = t.checked; render();
+});
+/* ---------- apagar histórico (pasta Recebidos) ---------- */
+function dirSize(d) { let t = 0; try { fs.readdirSync(d, { withFileTypes: true }).forEach(e => { const p = path.join(d, e.name); t += e.isDirectory() ? dirSize(p) : (fs.statSync(p).size || 0); }); } catch (e) {} return t; }
+function fmtSize(b) { return b > 1 << 30 ? (b / (1 << 30)).toFixed(1) + " GB" : b > 1 << 20 ? (b / (1 << 20)).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB"; }
+function allPackages() { try { return fs.readdirSync(BASE).filter(n => !n.startsWith("_")).map(id => ({ id, dir: path.join(BASE, id), meta: readJSON(path.join(BASE, id, "_meta.json")) || {} })).filter(x => { try { return fs.statSync(x.dir).isDirectory(); } catch (e) { return false; } }); } catch (e) { return []; } }
+function rmDir(d) { if (!d || path.relative(BASE, d).startsWith("..") || path.resolve(d) === path.resolve(BASE)) return false; try { if (fs.rmSync) fs.rmSync(d, { recursive: true, force: true }); else fs.rmdirSync(d, { recursive: true }); return !fs.existsSync(d); } catch (e) { return false; } }
+function askDelete(items, question) {
+  document.querySelectorAll(".modal").forEach(x => x.remove());
+  const d = document.createElement("div"); d.className = "modal";
+  d.innerHTML = `<div class="box"><b>Apagar do disco</b><p>${question}</p><p class="small">As imagens que já estão em projetos do After ficam guardadas em Documentos\\Figma2AE\\Biblioteca, então os projetos não quebram. Pacotes importados antes desta versão podem perder as imagens.</p>
+    <div class="row"><button class="btn ghost" data-x>Cancelar</button><button class="btn danger" data-ok>Apagar</button></div></div>`;
+  document.body.appendChild(d);
+  d.querySelector("[data-x]").onclick = () => d.remove();
+  d.querySelector("[data-ok]").onclick = () => {
+    let n = 0, b = 0; items.forEach(it => { const sz = dirSize(it.dir); if (rmDir(it.dir)) { n++; b += sz; } });
+    const gone = new Set(items.map(i => i.dir)); INBOX = INBOX.filter(i => !gone.has(i.dir));
+    d.remove(); render(); toast(`Apagado${n > 1 ? "s" : ""} ${n} pacote${n > 1 ? "s" : ""} · ${fmtSize(b)} liberados.`);
+  };
+}
+$("#clear").onclick = () => {
+  const done = allPackages().filter(x => x.meta.status === "done" || x.meta.status === "studio" || x.id.startsWith("local_"));
+  const all = allPackages();
+  if (!all.length) { toast("Nada para apagar."); return; }
+  const list = done.length ? done : all, sz = list.reduce((t, x) => t + dirSize(x.dir), 0);
+  askDelete(list, done.length ? `Apagar <b>${done.length}</b> pacote${done.length > 1 ? "s" : ""} já importado${done.length > 1 ? "s" : ""} (${fmtSize(sz)})?` : `Nenhum pacote marcado como importado. Apagar <b>todos os ${all.length}</b> recebidos (${fmtSize(sz)})?`);
+};
+$("#space").onclick = () => { try { require("child_process").exec(`explorer "${BASE}"`); } catch (e) {} };
+$("#openZip").onclick = () => {
+  let files = [];
+  try {
+    const r = window.cep.fs.showOpenDialogEx(false, false, "Escolha o pacote do Figma2AE", path.join(os.homedir(), "Downloads"), ["zip"]);
+    files = r && r.data ? r.data : [];
+  } catch (e) { toast("Não consegui abrir a janela de arquivos: " + esc(e.message)); }
+  if (!files.length) return;
+  try { addPackage(fs.readFileSync(files[0]), path.basename(files[0]).replace(/\.f2ae\.zip$|\.zip$/i, "")); }
+  catch (e) { toast("Pacote inválido: " + esc(e.message)); }
+};
+let toastT = 0;
+function toast(html) { document.querySelectorAll(".toast").forEach(x => x.remove()); const d = document.createElement("div"); d.className = "toast"; d.innerHTML = html; document.body.appendChild(d); clearTimeout(toastT); toastT = setTimeout(() => d.remove(), 4500); }
+
+render();
+try { const o = {}; OPT.forEach(x => { const el = $("#" + x); o[x] = el.type === "checkbox" ? el.checked : el.value; }); fs.mkdirSync(BASE, { recursive: true }); fs.writeFileSync(path.join(BASE, "_config.json"), JSON.stringify(o)); } catch (e) {}
+readState();
+scanInbox(true);
+try { fs.mkdirSync(BASE, { recursive: true }); fs.watch(BASE, () => setTimeout(() => scanInbox(false), 300)); } catch (e) {}
+setInterval(() => scanInbox(false), 2500);
+pingHost();
+setInterval(pingHost, 10000);
+</script>
+</body>
+</html>

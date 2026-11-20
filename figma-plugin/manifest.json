@@ -1,0 +1,20 @@
+{
+ "name": "Figma2AE",
+ "id": "figma2ae-iug-local",
+ "api": "1.0.0",
+ "main": "code.js",
+ "ui": "ui.html",
+ "editorType": [
+  "figma"
+ ],
+ "documentAccess": "dynamic-page",
+ "networkAccess": {
+  "allowedDomains": [
+   "none"
+  ],
+  "devAllowedDomains": [
+   "http://localhost:7452"
+  ],
+  "reasoning": "Envia os frames direto pro painel do Figma2AE no After Effects, que roda no próprio computador."
+ }
+}

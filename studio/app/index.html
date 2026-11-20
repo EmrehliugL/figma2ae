@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Figma2AE Studio</title>
+<style>
+:root{
+  --bg:#1b1b1b; --panel:#232323; --panel2:#2b2b2b; --panel3:#333333; --line:#3a3a3a; --line2:#2a2a2a;
+  --text:#d8d8d8; --muted:#9a9a9a; --faint:#6b6b6b; --blue:#2d8ceb; --blue2:#5aa9f5; --purple:#8080f0;
+  --ok:#8ccf9e; --warn:#e7c86b; --bad:#e08a7a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.45 "Segoe UI",system-ui,sans-serif;overflow:hidden;user-select:none}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#454545;border-radius:2px}::-webkit-scrollbar-track{background:transparent}
+.title{height:38px;-webkit-app-region:drag;display:flex;align-items:center;gap:9px;padding:0 14px;border-bottom:1px solid var(--line2)}
+.title img{width:18px;height:18px}
+.title b{font-weight:600;color:#fff;font-size:12.5px}
+.title span{color:var(--faint);font-size:12px}
+.wrap{display:grid;grid-template-columns:270px 1fr;height:calc(100% - 38px)}
+.side{border-right:1px solid var(--line2);display:flex;flex-direction:column;min-height:0;background:#1e1e1e}
+.side h4{margin:0;padding:12px 14px 8px;font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.7px;font-weight:600;display:flex;align-items:center}
+.side h4 button{margin-left:auto;background:none;border:0;color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;padding:2px 4px}
+.side h4 button:hover{color:#fff}
+.list{overflow:auto;flex:1;padding:0 8px 10px}
+.pk{padding:9px 10px;border-radius:3px;cursor:pointer;border-left:2px solid transparent;margin-bottom:2px}
+.pk:hover{background:var(--panel)}
+.pk.on{background:var(--panel2);border-left-color:var(--blue)}
+.pk{position:relative}.pk .rm{position:absolute;right:6px;top:7px;display:none;background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:3px}
+.pk:hover .rm{display:block}.pk .rm:hover{background:#b3372f;color:#fff}
+.side .foot{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line, #3a3a3a)}
+.side .foot button{flex:1;background:var(--panel2);border:1px solid var(--line, #3a3a3a);color:var(--muted);border-radius:3px;padding:5px;font-size:11.5px;cursor:pointer}
+.side .foot button:hover{color:#fff;border-color:#b3372f}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal .box{background:#2b2b2b;border:1px solid #3a3a3a;border-radius:4px;padding:16px;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.modal p{margin:8px 0;color:#d0d0d0;font-size:13px}.modal p.small{color:#8c8c8c;font-size:11.5px}
+.modal .row{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.btn.danger{background:#b3372f!important;border-color:#b3372f!important;color:#fff!important}
+.pk b{display:block;font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk small{color:var(--faint);font-size:11.5px}
+.pk .st{float:right;font-size:10px;font-weight:700;padding:1px 6px;border-radius:2px;margin-top:1px}
+.st.new{color:var(--blue2);background:#2d8ceb22}
+.st.done{color:var(--ok);background:#8ccf9e1a}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.head{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line2);background:var(--panel)}
+.head .t{min-width:0;flex:1}
+.head .t b{display:block;font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head .t small{color:var(--muted)}
+.pill{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:3px 10px;color:var(--muted);font-size:11.5px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}.dot.on{background:var(--ok)}
+.btn{border:1px solid var(--line);background:var(--panel2);padding:7px 13px;border-radius:3px;white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--panel3)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;padding:9px 18px}
+.btn.primary:hover:not(:disabled){background:#4a9ff0}
+.opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:9px 18px;border-bottom:1px solid var(--line2);color:var(--muted);font-size:12px}
+.opts label{display:flex;align-items:center;gap:6px}
+.opts select,.opts input[type=number]{background:#1e1e1e;border:1px solid var(--line);border-radius:3px;padding:3px 5px;width:68px}
+input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px;margin:0}
+.body{overflow:auto;flex:1;padding:16px 18px 30px}
+.empty{color:var(--muted);text-align:center;padding:70px 20px;line-height:1.8}
+.empty b{color:#fff}
+.steps{display:inline-block;text-align:left;margin-top:16px;background:var(--panel);border:1px solid var(--line2);border-radius:4px;padding:12px 16px}
+.steps div{display:flex;gap:9px;margin:5px 0}
+.steps i{font-style:normal;background:var(--blue);color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:none}
+.summary{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.chip{background:var(--panel);border:1px solid var(--line2);border-radius:3px;padding:6px 10px;color:var(--muted);font-size:12px}
+.chip b{color:#fff}
+.warn{background:#3a3320;border:1px solid #5a4d28;color:var(--warn);border-radius:3px;padding:8px 12px;margin-bottom:14px;font-size:12.5px}
+.shot{background:var(--panel);border:1px solid var(--line2);border-radius:4px;margin-bottom:14px;overflow:hidden}
+.sh{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line2);background:#262626;box-shadow:inset 3px 0 0 var(--c)}
+.sh .n{font-weight:700;color:#fff;letter-spacing:.3px}
+.sh .tm{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+.sh .why{color:var(--faint);font-size:12px;margin-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.sh .join{background:none;border:1px solid var(--line);border-radius:3px;color:var(--muted);font-size:11.5px;padding:3px 8px}
+.sh .join:hover{color:#fff;border-color:var(--blue)}
+.frames{display:flex;gap:0;overflow-x:auto;padding:12px}
+.fr{flex:none;width:208px;position:relative;margin-right:14px}
+.fr img,.fr .noimg{width:208px;height:117px;object-fit:cover;background:#151515;border-radius:3px;border:1px solid var(--line2);display:block}
+.fr .nm{margin-top:6px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.fr .row{display:flex;align-items:center;gap:6px;margin-top:4px;color:var(--faint);font-size:11.5px}
+.fr .row input{width:58px;background:#1e1e1e;border:1px solid var(--line);border-radius:3px;padding:2px 5px;color:#fff}
+.fr .row .tag{color:var(--blue2)}
+.cut{position:absolute;left:-15px;top:40px;width:16px;height:36px;border:0;border-radius:3px;background:var(--panel3);color:var(--muted);font-size:11px;padding:0;display:flex;align-items:center;justify-content:center}
+.cut:hover{background:var(--blue);color:#fff}
+.fr .score{position:absolute;right:6px;top:6px;background:#000a;border-radius:2px;padding:1px 5px;font-size:10.5px;color:#ddd}
+.res{margin-top:4px;border-radius:4px;padding:12px 14px;background:var(--panel);border:1px solid var(--line2)}
+.res .ok{color:var(--ok);font-weight:700}
+.res .err{color:var(--bad);font-weight:700}
+.res ul{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:12px;max-height:160px;overflow:auto}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--faint);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="title"><img src="icon.png" alt=""><b>Figma2AE Studio</b><span>monta as tomadas no After Effects</span></div>
+<div class="wrap">
+  <div class="side">
+    <h4>Recebidos do Figma <button id="pasta" title="Abrir a pasta dos pacotes">abrir pasta</button></h4>
+    <div class="list" id="list"></div>
+    <div class="foot"><button id="rmDone" title="Apaga do disco os pacotes já montados/importados">Apagar montados</button><button id="rmAll" title="Apaga todo o histórico do disco">Apagar tudo</button></div>
+  </div>
+  <div class="main">
+    <div class="head">
+      <div class="t"><b id="ttl">Nenhum pacote selecionado</b><small id="sub">Envie frames pelo plugin do Figma</small></div>
+      <div class="pill"><span class="dot" id="dot"></span><span id="ae">After Effects</span></div>
+      <button class="btn primary" id="montar" disabled>Montar no After Effects</button>
+    </div>
+    <div class="opts">
+      <label>Duração padrão (s) <input type="number" id="oDur" min="0.1" step="0.5" value="2"></label>
+      <label><input type="checkbox" id="oNames" checked> Ler duração do nome do frame (ex.: “(0.5s)”)</label>
+      <label>Frame rate <select id="oFps"><option>23.976</option><option>24</option><option>25</option><option>29.97</option><option selected>30</option><option>50</option><option>60</option></select></label>
+      <label><input type="checkbox" id="oMaster" checked> Criar MASTER com as tomadas em sequência</label>
+      <label><input type="checkbox" id="oOpen" checked> Abrir no After ao terminar</label>
+    </div>
+    <div class="body" id="body"></div>
+  </div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const COLORS = ["#2d8ceb", "#8080f0", "#4fbf9f", "#e0a458", "#d68fa8", "#6cb6d9", "#b3d98f"];
+let LIST = [], CUR = null, DATA = null, BUSY = false, RESULT = null, AE = null;
+const fmt = s => { s = Math.round(s * 100) / 100; const m = Math.floor(s / 60), r = (s - m * 60); return m + ":" + (r < 10 ? "0" : "") + r.toFixed(r % 1 ? (r * 10 % 1 ? 2 : 1) : 0); };
+
+async function loadCfg() {
+  const c = await api.cfg();
+  $("#oDur").value = c.defaultDur; $("#oNames").checked = c.useNames; $("#oFps").value = c.fps; $("#oMaster").checked = c.master; $("#oOpen").checked = c.openAfter;
+}
+function opts() { return { defaultDur: Math.max(0.1, +$("#oDur").value || 2), useNames: $("#oNames").checked, fps: $("#oFps").value, master: $("#oMaster").checked, openAfter: $("#oOpen").checked }; }
+["oDur", "oNames", "oFps", "oMaster", "oOpen"].forEach(k => $("#" + k).addEventListener("change", async () => {
+  await api.salvarCfg(opts());
+  if ((k === "oDur" || k === "oNames") && CUR) abrir(CUR, true);
+}));
+
+async function listar() {
+  LIST = await api.listar();
+  $("#list").innerHTML = LIST.length ? LIST.map(p => `<div class="pk ${p.id === CUR ? "on" : ""}" data-id="${esc(p.id)}"><span class="st ${p.status === "done" ? "done" : "new"}">${p.status === "done" ? (p.studio ? "montado" : "importado") : "novo"}</span>
+      <b>${esc(p.label.replace(/^Sem título - /, ""))}</b><small>${new Date(p.time).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · ${p.comps} frame${p.comps === 1 ? "" : "s"}</small><button class="rm" data-rm="${esc(p.id)}" title="Apagar do disco">🗑</button></div>`).join("")
+    : `<div style="color:var(--faint);padding:10px 8px;font-size:12px">Nada recebido ainda.</div>`;
+  if (!CUR && LIST.length && LIST[0].status !== "done") abrir(LIST[0].id);
+}
+$("#list").addEventListener("click", e => {
+  const r = e.target.closest("[data-rm]"); if (r) { e.stopPropagation(); const p = LIST.find(x => x.id === r.dataset.rm); confirmDelete([r.dataset.rm], `Apagar “${esc(p ? p.label : r.dataset.rm)}” do disco?`); return; }
+  const d = e.target.closest(".pk"); if (d) abrir(d.dataset.id); });
+function fmtSize(b) { return b > 1 << 30 ? (b / (1 << 30)).toFixed(1) + " GB" : b > 1 << 20 ? (b / (1 << 20)).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB"; }
+async function confirmDelete(ids, q) {
+  if (!ids.length) return;
+  const sz = await api.tamanho(ids);
+  document.querySelectorAll(".modal").forEach(x => x.remove());
+  const d = document.createElement("div"); d.className = "modal";
+  d.innerHTML = `<div class="box"><b>Apagar do disco</b><p>${q} <b>${ids.length}</b> pacote${ids.length > 1 ? "s" : ""}, ${fmtSize(sz)}.</p>
+    <p class="small">Não dá pra desfazer. As imagens já usadas no After Effects ficam guardadas em Documentos\\Figma2AE\\Biblioteca, então os projetos montados continuam funcionando (pacotes montados antes desta versão podem perder as imagens).</p>
+    <div class="row"><button class="btn" data-x>Cancelar</button><button class="btn danger" data-ok>Apagar</button></div></div>`;
+  document.body.appendChild(d);
+  d.querySelector("[data-x]").onclick = () => d.remove();
+  d.querySelector("[data-ok]").onclick = async () => {
+    const r = await api.apagar(ids); d.remove();
+    if (ids.includes(CUR)) { CUR = null; DATA = null; RESULT = null; render(); }
+    await listar(); toastMsg(`${r.n} pacote${r.n === 1 ? "" : "s"} apagado${r.n === 1 ? "" : "s"} · ${fmtSize(r.bytes)} liberados`);
+  };
+}
+function toastMsg(t) { const d = document.createElement("div"); d.className = "modal"; d.style.background = "transparent"; d.style.pointerEvents = "none"; d.style.alignItems = "flex-end";
+  d.innerHTML = `<div class="box" style="margin-bottom:24px;padding:9px 14px">${t}</div>`; document.body.appendChild(d); setTimeout(() => d.remove(), 3500); }
+$("#rmDone").onclick = () => confirmDelete(LIST.filter(p => p.status === "done").map(p => p.id), "Apagar os já montados/importados?");
+$("#rmAll").onclick = () => confirmDelete(LIST.map(p => p.id), "Apagar TODO o histórico?");
+$("#pasta").onclick = () => api.pasta(CUR);
+
+async function abrir(id, keepCuts) {
+  const prev = DATA;
+  try { DATA = await api.abrir(id, opts()); } catch (e) { DATA = null; RESULT = { ok: false, error: e.message }; }
+  if (keepCuts && prev && prev.id === id) DATA.frames.forEach((f, k) => { if (prev.frames[k]) { f.cut = prev.frames[k].cut; if (prev.frames[k].manualDur) { f.dur = prev.frames[k].dur; f.manualDur = true; } } });
+  if (CUR !== id) RESULT = null;
+  CUR = id;
+  document.querySelectorAll(".pk").forEach(p => p.classList.toggle("on", p.dataset.id === id));
+  render();
+}
+function shots() {
+  const out = [];
+  (DATA ? DATA.frames : []).forEach((f, k) => { if (f.cut || !out.length) out.push({ frames: [], start: k }); out[out.length - 1].frames.push(f); });
+  return out;
+}
+function render() {
+  const b = $("#body");
+  if (!DATA) {
+    $("#ttl").textContent = "Nenhum pacote selecionado"; $("#sub").textContent = "Envie frames pelo plugin do Figma";
+    b.innerHTML = (RESULT && !RESULT.ok ? `<div class="warn">${esc(RESULT.error)}</div>` : "") + `<div class="empty"><b>Monte suas tomadas com um clique.</b>
+      <div class="steps">
+        <div><i>1</i><span>No Figma, abra o plugin <b>Figma2AE</b> e selecione os frames (ou a cena inteira).</span></div>
+        <div><i>2</i><span>Clique em <b>Enviar pro After Effects</b>. O pacote aparece aqui na lista.</span></div>
+        <div><i>3</i><span>O Studio separa as tomadas: o que só troca texto fica na mesma comp; o que muda de fundo vira comp nova.</span></div>
+        <div><i>4</i><span>Ajuste se quiser (✂ corta, “juntar” une, duração de cada frame) e clique em <b>Montar no After Effects</b>.</span></div>
+      </div></div>`;
+    $("#montar").disabled = true; return;
+  }
+  const S = shots(), total = DATA.frames.reduce((a, f) => a + f.dur, 0);
+  $("#ttl").textContent = (DATA.file || "Figma") + " · " + (DATA.page || "");
+  $("#sub").textContent = `${DATA.frames.length} frame${DATA.frames.length > 1 ? "s" : ""} → ${S.length} tomada${S.length > 1 ? "s" : ""} · ${fmt(total)} no total`;
+  let h = "";
+  if (!DATA.continuity) h += `<div class="warn">Esse pacote veio sem a análise de continuidade (opção “Continuidade nos comentários” desligada no plugin). O Studio ainda separa as tomadas, mas junta menos camadas. Pra melhor resultado, ligue a opção e envie de novo.</div>`;
+  let t = 0;
+  S.forEach((s, i) => {
+    const d = s.frames.reduce((a, f) => a + f.dur, 0), c = COLORS[i % COLORS.length];
+    const whys = [...new Set(s.frames.slice(1).map(f => f.why).filter(Boolean))];
+    h += `<div class="shot"><div class="sh" style="--c:${c}"><span class="n" style="color:${c}">TOMADA ${String(i + 1).padStart(2, "0")}</span>
+      <span class="tm">${fmt(t)} – ${fmt(t + d)} · ${s.frames.length} frame${s.frames.length > 1 ? "s" : ""} · ${s.frames.length > 1 ? "uma comp só" : "comp própria"}</span>
+      <span class="why">${s.frames.length > 1 ? esc(whys.join(" · ")) : (i > 0 ? "corte: " + esc(s.frames[0].why) : "")}</span>
+      ${i > 0 ? `<button class="join" data-join="${s.start}" title="Juntar com a tomada anterior (mesma comp)">⟵ juntar com a anterior</button>` : ""}</div><div class="frames">`;
+    s.frames.forEach((f, k) => {
+      const gi = s.start + k;
+      h += `<div class="fr">${k > 0 ? `<button class="cut" data-cut="${gi}" title="Cortar aqui: este frame começa uma tomada nova (${esc(f.why)}, nota ${f.score})">✂</button>` : ""}
+        ${f.thumb ? `<img src="${esc("file:///" + f.thumb.replace(/\\/g, "/"))}">` : `<div class="noimg"></div>`}
+        ${k > 0 ? `<span class="score" title="Semelhança com o frame anterior">${Math.round(f.score * 100)}%</span>` : ""}
+        <div class="nm" title="${esc(f.name)}">${esc(f.name)}</div>
+        <div class="row"><input type="number" min="0.04" step="0.1" value="${f.dur}" data-dur="${gi}"> s ${f.durFromName && !f.manualDur ? '<span class="tag">do nome</span>' : ""}</div></div>`;
+    });
+    h += `</div></div>`;
+    t += d;
+  });
+  if (BUSY) h += `<div class="res"><span class="spin"></span> Montando no After Effects…</div>`;
+  else if (RESULT) {
+    if (RESULT.ok) h += `<div class="res"><span class="ok">✓ Pronto no After Effects</span> · ${RESULT.comps} tomada${RESULT.comps > 1 ? "s" : ""}, ${RESULT.layers} camadas em ${(+RESULT.seconds).toFixed(1)} s
+      <div style="margin-top:4px;color:var(--muted);font-size:12px">${esc((RESULT.names || []).join(" · "))}</div>
+      ${RESULT.fonts && RESULT.fonts.length ? `<div style="margin-top:6px;color:var(--warn);font-size:12px">Fontes não instaladas (o AE trocou por outra): ${esc(RESULT.fonts.join(", "))}</div>` : ""}
+      ${RESULT.notes && RESULT.notes.length ? `<ul>${RESULT.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}</div>`;
+    else h += `<div class="res"><span class="err">Não deu certo:</span> ${esc(RESULT.error)}</div>`;
+  }
+  b.innerHTML = h;
+  $("#montar").disabled = BUSY || !AE || !AE.ok;
+  $("#montar").textContent = S.length ? `Montar ${S.length} tomada${S.length > 1 ? "s" : ""} no After Effects` : "Montar no After Effects";
+}
+$("#body").addEventListener("click", e => {
+  const c = e.target.closest("[data-cut],[data-join]"); if (!c || !DATA) return;
+  if (c.dataset.cut) DATA.frames[+c.dataset.cut].cut = true;
+  if (c.dataset.join) DATA.frames[+c.dataset.join].cut = false;
+  RESULT = null; render();
+});
+$("#body").addEventListener("change", e => {
+  const d = e.target.dataset.dur; if (d === undefined || !DATA) return;
+  DATA.frames[+d].dur = Math.max(0.04, +e.target.value || 0.04); DATA.frames[+d].manualDur = true; render();
+});
+$("#montar").onclick = async () => {
+  if (!DATA || BUSY) return;
+  BUSY = true; RESULT = null; render();
+  RESULT = await api.montar(CUR, DATA.frames.map(f => ({ i: f.i, name: f.name, group: f.group, dur: f.dur, cut: f.cut })), opts());
+  BUSY = false; render(); listar();
+};
+async function ping() {
+  AE = await api.ping();
+  $("#dot").className = "dot" + (AE && AE.ok ? " on" : "");
+  $("#ae").textContent = AE && AE.ok ? "After Effects conectado" + (AE.project ? " · " + AE.project : "") : "After Effects fechado";
+  if (DATA) $("#montar").disabled = BUSY || !AE || !AE.ok;
+}
+api.onAtualizar(() => listar());
+loadCfg().then(() => { listar(); ping(); setInterval(ping, 3000); render(); });
+</script>
+</body>
+</html>

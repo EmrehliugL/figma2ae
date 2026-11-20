@@ -1,0 +1,26 @@
+QUER QUE O CLAUDE INSTALE TUDO SOZINHO?
+=======================================
+
+Funciona com o Claude que consegue mexer no seu computador:
+  - Claude Code (terminal), ou
+  - o app do Claude no computador com acesso a pastas / uso do computador ligado.
+
+1. Extraia este zip numa pasta (botao direito > Extrair tudo).
+2. Abra o Claude e de acesso a essa pasta (no Claude Code, abra o terminal dentro dela).
+3. Copie e cole a mensagem abaixo:
+
+----------------------------------------------------------------------------
+Instala o Figma2AE pra mim. O pacote esta nesta pasta: [COLE AQUI O CAMINHO
+DA PASTA, ex.: C:\Users\SeuNome\Downloads\Figma2AE]. Le o arquivo CLAUDE.md
+que esta dentro dela e segue o roteiro: confere se o After Effects esta
+fechado (me avisa antes de fechar qualquer coisa), roda o INSTALAR.bat /auto,
+confere com o VERIFICAR.bat /auto e, se conseguir controlar a tela, importa o
+plugin no Figma de desktop. No fim me diz o que ficou instalado e o que
+faltou.
+----------------------------------------------------------------------------
+
+O Claude vai ler o CLAUDE.md (as instrucoes dele estao la), instalar a extensao
+do After Effects, o Figma2AE Studio e o plugin, e te avisar se precisar de
+voce para algum passo (por exemplo, fechar o After Effects).
+
+Prefere fazer sozinho? E so dar dois cliques no INSTALAR.bat.

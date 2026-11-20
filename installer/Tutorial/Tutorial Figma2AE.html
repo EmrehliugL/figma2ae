@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Figma2AE · Tutorial</title><style>body{font-family:"Segoe UI",Arial,sans-serif;max-width:860px;margin:32px auto;padding:0 28px;color:#222;line-height:1.55;font-size:14px}
+h1{font-size:26px;border-bottom:3px solid #2d8ceb;padding-bottom:6px;margin-top:38px}h1:first-child{margin-top:0}
+h2{font-size:19px;margin-top:28px;color:#1a1a1a}h3{font-size:15.5px;margin-top:20px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}th,td{border:1px solid #d6d6d6;padding:6px 9px;text-align:left;vertical-align:top}
+th{background:#f1f5fa}code{background:#f2f2f2;padding:1px 5px;border-radius:3px;font-size:12.5px}
+pre{background:#f6f6f6;padding:10px 12px;border-radius:5px;overflow:auto;font-size:12px;line-height:1.35}
+hr{border:0;border-top:1px solid #ddd;margin:30px 0}strong{color:#111}
+@media print{pre,table{page-break-inside:avoid}}</style></head><body><h1>Figma2AE · Tutorial de instalação e uso</h1>
+<p>O Figma2AE leva as telas do seu storyboard no Figma para o After Effects como camadas nativas e editáveis: formas com Stroke de verdade, textos editáveis, imagens, gradientes recriados com efeitos nativos e uma comp por frame, com o design igual ao do Figma.</p>
+<p>São três peças que trabalham juntas:</p>
+<table>
+<thead>
+<tr>
+<th>Peça</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Plugin do Figma</strong></td>
+<td>Você escolhe os frames e clica em <strong>Enviar pro After Effects</strong>.</td>
+</tr>
+<tr>
+<td><strong>Extensão do After Effects</strong></td>
+<td>Recebe o envio em segundo plano (mesmo com o painel fechado) e monta as comps.</td>
+</tr>
+<tr>
+<td><strong>Figma2AE Studio</strong> (opcional)</td>
+<td>Analisa uma sequência de frames e monta tudo como <strong>tomadas</strong>: troca de texto vira animação na mesma comp, troca de fundo vira comp nova, e no fim gera uma MASTER com tudo em ordem.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Requisitos:</strong> Windows 10 ou 11 · After Effects 2020 ou mais novo · Figma <strong>app de desktop</strong> (o Figma no navegador não roda plugins locais).</p>
+<hr />
+<h1>Parte 1 · Instalação</h1>
+<h2>Jeito rápido (recomendado)</h2>
+<ol>
+<li>Feche o <strong>After Effects</strong> e o <strong>Figma2AE Studio</strong>, se estiverem abertos.</li>
+<li>Extraia este zip numa pasta qualquer (botão direito → <strong>Extrair tudo</strong>).</li>
+<li>Dê dois cliques em <strong>INSTALAR.bat</strong>.
+    Se o Windows mostrar "O Windows protegeu o computador", clique em <strong>Mais informações → Executar assim mesmo</strong>.</li>
+<li>O instalador faz sozinho:<ul>
+<li>instala a extensão no After Effects e libera extensões sem assinatura (só no seu usuário);</li>
+<li>instala o <strong>Figma2AE Studio</strong> com atalho na Área de Trabalho e no Menu Iniciar;</li>
+<li>copia o plugin do Figma para <code>Documentos\Figma2AE\figma-plugin</code>;</li>
+<li>cria as pastas <code>Recebidos</code> e <code>Biblioteca</code>.</li>
+</ul>
+</li>
+<li>Falta <strong>um passo no Figma</strong> (o Figma não deixa instalar plugin por fora):<ul>
+<li>Abra qualquer arquivo no <strong>Figma de desktop</strong>.</li>
+<li>Menu <strong>Plugins → Desenvolvimento → Importar plugin do manifesto…</strong>
+(em inglês: <em>Plugins → Development → Import plugin from manifest…</em>)</li>
+<li>Escolha <code>Documentos\Figma2AE\figma-plugin\manifest.json</code>.</li>
+</ul>
+</li>
+<li>Abra o <strong>After Effects</strong>. O painel aparece em <strong>Janela → Extensões → Figma2AE</strong> (em algumas versões: <em>Extensões (legado)</em>).</li>
+</ol>
+<p>Pronto. Na próxima vez que abrir o plugin no Figma, ele deve mostrar <strong>"AE conectado"</strong> em verde.</p>
+<p>Para conferir, dê dois cliques em <strong>VERIFICAR.bat</strong>: cada item aparece como <code>[OK]</code> ou <code>[FALTA]</code>.</p>
+<h2>Deixar o Claude instalar tudo</h2>
+<p>Se você usa o <strong>Claude Code</strong> ou o app do Claude no computador com acesso a pastas ou uso do computador ligado, ele pode fazer a instalação inteira por você:</p>
+<ol>
+<li>Extraia o zip.</li>
+<li>Abra o arquivo <strong>PROMPT PARA O CLAUDE.txt</strong>, copie a mensagem e cole no Claude, trocando o caminho pela pasta onde você extraiu.</li>
+<li>O Claude lê o <strong>CLAUDE.md</strong> (as instruções dele), confere se o After está fechado (e te pede pra fechar, sem mexer no seu projeto), roda o instalador no modo automático, confere com o VERIFICAR e, se tiver controle da tela, importa o plugin no Figma. No fim ele te diz o que ficou pronto e o que faltou.</li>
+</ol>
+<h2>Instalação manual (se preferir fazer na mão)</h2>
+<p><strong>Plugin do Figma</strong></p>
+<ol>
+<li>Copie a pasta <code>1 - Plugin Figma</code> para um lugar fixo (ex.: <code>Documentos\Figma2AE\figma-plugin</code>). O Figma lê os arquivos de lá toda vez, então não mova depois.</li>
+<li>No Figma de desktop: <strong>Plugins → Desenvolvimento → Importar plugin do manifesto…</strong> e escolha o <code>manifest.json</code>.</li>
+</ol>
+<p><strong>Extensão do After Effects</strong></p>
+<ol>
+<li>Copie a pasta <code>2 - Extensao After Effects\com.iug.figma2ae</code> para:
+    <code>C:\Users\SEU_USUARIO\AppData\Roaming\Adobe\CEP\extensions\</code>
+    (cole <code>%APPDATA%\Adobe\CEP\extensions</code> na barra do Explorador de Arquivos; crie as pastas se não existirem).</li>
+<li>Dê dois cliques em <strong>Ativar extensoes sem assinatura.reg</strong> e confirme.</li>
+<li>Abra o After Effects → <strong>Janela → Extensões → Figma2AE</strong>.</li>
+</ol>
+<p><strong>Figma2AE Studio</strong></p>
+<ol>
+<li>Copie a pasta <code>4 - Figma2AE Studio</code> para onde quiser (ex.: <code>%LOCALAPPDATA%\Programs\Figma2AE Studio</code>).</li>
+<li>Abra o <strong>Figma2AE Studio.exe</strong>. Se quiser, clique com o botão direito → <strong>Enviar para → Área de trabalho (criar atalho)</strong>.</li>
+</ol>
+<p><strong>Script alternativo (sem extensão)</strong>
+A pasta <code>3 - Script After Effects (alternativo)</code> tem o <code>Figma2AE.jsx</code>, que funciona sem instalar nada: no After, <strong>Arquivo → Scripts → Executar arquivo de script…</strong>, escolha o <code>.jsx</code> e importe um <code>.f2ae.zip</code> salvo pelo plugin. Ele não recebe envios automáticos: serve de plano B.</p>
+<h2>Atualizar</h2>
+<p><strong>Com um clique (recomendado).</strong> Quando sai uma versão nova, aparece uma faixa azul <strong>"Atualização disponível"</strong> no topo do plugin do Figma e do painel do After, com o que mudou. Clique em <strong>Atualizar</strong>: o After baixa a versão nova, confere se o arquivo está íntegro e atualiza as três partes de uma vez (plugin, extensão e Studio). Depois é só fechar e abrir o plugin e reiniciar o After. Se o Studio estiver aberto, ele atualiza sozinho assim que você fechar ele.</p>
+<p>O After procura atualizações quando abre e a cada 6 horas. Precisa estar com internet, e o After precisa estar aberto (é ele que baixa).</p>
+<p><strong>Pelo instalador.</strong> Rodar o <strong>INSTALAR.bat</strong> de uma versão nova também atualiza tudo e mantém o seu histórico e a Biblioteca.</p>
+<h2>Desinstalar</h2>
+<p>Dê dois cliques em <strong>DESINSTALAR.bat</strong>: ele remove a extensão, o Studio e os atalhos, e mantém <code>Documentos\Figma2AE</code> (histórico, Biblioteca e plugin). No Figma, remova o plugin em <strong>Plugins → Gerenciar plugins</strong>. Apague <code>Documentos\Figma2AE</code> só se não precisar mais do histórico e da Biblioteca.</p>
+<hr />
+<h1>Parte 2 · Uso</h1>
+<h2>Fluxo básico: Figma → After em 3 cliques</h2>
+<ol>
+<li><strong>No After Effects</strong>, deixe o After aberto (o painel pode estar fechado: o receptor roda em segundo plano).</li>
+<li><strong>No Figma</strong>, selecione o que quer levar e rode o plugin: <strong>Plugins → Desenvolvimento → Figma2AE</strong> (ou <code>Ctrl + /</code> e digite <em>Figma2AE</em>).</li>
+<li>Confira a lista e clique em <strong>Enviar N comps pro After Effects</strong>.</li>
+</ol>
+<p>O painel do After abre sozinho com o envio. Com <strong>Importar automaticamente</strong> ligado, as comps já são montadas na hora.</p>
+<h2>O plugin do Figma</h2>
+<h3>O que selecionar</h3>
+<table>
+<thead>
+<tr>
+<th>Você seleciona…</th>
+<th>O que vira no After</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Um frame</strong></td>
+<td>Uma comp idêntica a ele.</td>
+</tr>
+<tr>
+<td><strong>Vários frames</strong></td>
+<td>Uma comp separada pra cada um.</td>
+</tr>
+<tr>
+<td><strong>A cena inteira</strong> (o frame ou a Section que guarda as telas)</td>
+<td>Uma comp por tela, agrupadas com o nome da cena.</td>
+</tr>
+<tr>
+<td><strong>Objetos dentro de um frame</strong></td>
+<td>Uma comp do tamanho do frame só com esses objetos, na mesma posição.</td>
+</tr>
+</tbody>
+</table>
+<p>O plugin entende contêineres dentro de contêineres (ex.: um "Loop option 2" com várias telas dentro do "Side to side"): cada tela vira uma comp de 1920×1080, nunca uma comp gigante.</p>
+<h3>A lista de comps</h3>
+<ul>
+<li><strong>Caixinha de cada linha:</strong> marca ou desmarca o que vai. A caixinha do grupo marca tudo de uma cena.</li>
+<li><strong>Miniatura:</strong> clique para o Figma mostrar aquele frame.</li>
+<li><strong>Juntar numa comp só (em sequência):</strong> as telas daquele grupo viram <strong>uma comp</strong> do tamanho da tela, uma depois da outra no tempo, com marcadores. Cada tela continua tendo a sua comp, dentro de uma pasta <code>_FRAMES</code>. Para voltar, clique em <strong>Separar (1 comp por frame)</strong>.</li>
+<li><strong>Redimensionar a janela:</strong> arraste o canto inferior direito. O tamanho fica salvo.</li>
+</ul>
+<h3>Opções (embaixo)</h3>
+<table>
+<thead>
+<tr>
+<th>Opção</th>
+<th>Pra que serve</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Referência do Figma (guia)</strong></td>
+<td>Põe a imagem do frame como camada-guia no topo da comp (desligada). Ligue o olho para comparar; ela não sai no render.</td>
+</tr>
+<tr>
+<td><strong>Fundo do frame</strong></td>
+<td>Inclui o fundo do frame.</td>
+</tr>
+<tr>
+<td><strong>Continuidade nos comentários</strong></td>
+<td>Em telas da mesma cena, cada camada diz no comentário se é nova, igual ou mudou em relação à tela anterior.</td>
+</tr>
+<tr>
+<td><strong>Vetores pesados viram imagem</strong></td>
+<td>Vetores com centenas de formas (campos de pontos, retratos pontilhados) entram como imagem em alta. A importação fica muito mais rápida e o After mais leve. Desmarque se precisar deles editáveis.</td>
+</tr>
+<tr>
+<td><strong>Qualidade das imagens</strong></td>
+<td>Resolução das imagens exportadas (2x é o equilíbrio).</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Enviar pro After Effects:</strong> manda direto para o After aberto.</li>
+<li><strong>Salvar .zip:</strong> salva um pacote <code>.f2ae.zip</code> para importar depois (ou em outro computador).</li>
+</ul>
+<h2>O painel do After Effects</h2>
+<p>Fica em <strong>Janela → Extensões → Figma2AE</strong>.</p>
+<ul>
+<li><strong>Bolinha verde "Figma conectado":</strong> o plugin do Figma está aberto e conversando com o After.</li>
+<li><strong>Pacotes recebidos:</strong> cada envio aparece como um cartão, com as comps marcadas. Desmarque o que não quer e clique em <strong>Importar</strong>.</li>
+<li><strong>Importar automaticamente ao receber do Figma:</strong> monta tudo assim que chega, sem clicar.</li>
+<li><strong>Frame rate / Duração:</strong> fps e duração de cada comp.</li>
+<li><strong>MASTER em sequência:</strong> cria também uma comp MASTER com todas em ordem.</li>
+<li><strong>Abrir pacote…:</strong> importa um <code>.f2ae.zip</code> salvo.</li>
+<li><strong>🗑 no cartão / Apagar importados…:</strong> apaga pacotes do histórico e libera espaço. Sempre pede confirmação e mostra quanto vai liberar. As imagens que os seus projetos usam ficam guardadas na <strong>Biblioteca</strong>, então os projetos não quebram.</li>
+<li><strong>📁:</strong> abre a pasta dos pacotes recebidos.</li>
+</ul>
+<h3>O que vem em cada comp</h3>
+<ul>
+<li>Retângulos, elipses e vetores viram <strong>shape layers</strong>, com <strong>Stroke nativo</strong> (espessura, pontas, junções, tracejado, por dentro ou por fora).</li>
+<li>Textos viram <strong>texto editável</strong>, com a mesma fonte, tamanho, cor e entrelinha.</li>
+<li>Fotos entram na resolução original. Gradientes e texturas de fundo são <strong>recriados com efeitos nativos</strong> (Gradient Ramp, máscaras, Motion Tile) sempre que possível.</li>
+<li>Grupos ganham <strong>um nulo</strong> só quando ajuda (grupos de cima com 2 ou mais itens), sem poluir a timeline.</li>
+<li>Frames que recortam o conteúdo viram <strong>precomp</strong>, com recorte arredondado quando têm canto.</li>
+</ul>
+<h2>O Figma2AE Studio (tomadas automáticas)</h2>
+<p>Use quando a cena é uma sequência: por exemplo, a mesma pessoa falando e só os textos mudando. Em vez de uma comp por tela, o Studio monta <strong>tomadas</strong>.</p>
+<ol>
+<li>Abra o <strong>Figma2AE Studio</strong> (atalho na Área de Trabalho). Com ele aberto, os envios do Figma vão para ele em vez do painel do After.</li>
+<li>No Figma, selecione as telas da cena e clique em <strong>Enviar pro After Effects</strong>.</li>
+<li>No Studio, o pacote aparece na lista da esquerda. Ele analisa sozinho:<ul>
+<li><strong>mesmo fundo, só troca de texto</strong> → tudo na mesma tomada, com os textos trocando no tempo certo;</li>
+<li><strong>fundo diferente ou elemento grande novo</strong> → tomada nova.</li>
+</ul>
+</li>
+<li>Ajuste se quiser:<ul>
+<li><strong>✂</strong> corta uma tomada em duas a partir daquela tela;</li>
+<li><strong>juntar com a anterior</strong> desfaz um corte;</li>
+<li>o número embaixo de cada tela é a <strong>duração</strong> em segundos.</li>
+</ul>
+</li>
+<li>Clique em <strong>Montar N tomadas no After Effects</strong>. O After monta as tomadas e uma <strong>MASTER_SEQUENCIA</strong> com tudo em ordem e marcadores.</li>
+</ol>
+<p><strong>Dica de duração:</strong> coloque o tempo no nome da tela no Figma, ex.: <code>Scene 12 - beat 3 (1.5s)</code>. Com a opção <strong>Ler duração do nome do frame</strong> ligada, o Studio já usa esse tempo.</p>
+<p>Para limpar o histórico: <strong>🗑</strong> em cada pacote (passe o mouse), <strong>Apagar montados</strong> ou <strong>Apagar tudo</strong>, sempre com confirmação.</p>
+<h2>Discord: "Jogando After Effects" (opcional)</h2>
+<p>A extensão consegue mostrar <strong>"Jogando After Effects"</strong> no seu perfil do Discord enquanto o After estiver aberto, sem mostrar mais nada. Há dois jeitos:</p>
+<p><strong>Jeito simples (sem código):</strong> no Discord, <strong>Configurações → Jogos registrados → Adicione-o!</strong>, com o After aberto, e escolha o After Effects. Daí em diante aparece sozinho.</p>
+<p><strong>Pela extensão:</strong></p>
+<ol>
+<li>Entre em <strong>discord.com/developers/applications</strong>, clique em <strong>New Application</strong> e dê o nome <strong>After Effects</strong> (é esse nome que aparece no "Jogando…").</li>
+<li>Copie o <strong>Application ID</strong>.</li>
+<li>No painel Figma2AE do After, embaixo das opções, cole o ID e marque <strong>Discord: mostrar "Jogando After Effects"</strong>.</li>
+<li>Reabra o After uma vez. Ao lado aparece <strong>✓ aparecendo no Discord</strong>.</li>
+</ol>
+<hr />
+<h1>Problemas comuns</h1>
+<table>
+<thead>
+<tr>
+<th>Problema</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>O instalador diz que o <strong>After Effects está aberto</strong></td>
+<td>Salve o projeto, feche o After e aperte uma tecla: ele tenta de novo.</td>
+</tr>
+<tr>
+<td>O plugin mostra <strong>"AE desconectado"</strong></td>
+<td>O After Effects precisa estar aberto. Se acabou de instalar, feche e abra o After uma vez.</td>
+</tr>
+<tr>
+<td>O painel diz <strong>"receptor parado"</strong></td>
+<td>Outra coisa está usando a porta 7452, ou o After abriu antes da instalação. Feche e abra o After.</td>
+</tr>
+<tr>
+<td>O painel não aparece em <strong>Janela → Extensões</strong></td>
+<td>Rode o <strong>VERIFICAR.bat</strong>. Se algo estiver <code>[FALTA]</code>, rode o <strong>INSTALAR.bat</strong> de novo e reabra o After. O registro de cada instalação fica em <code>Documentos\Figma2AE\instalacao.log</code>.</td>
+</tr>
+<tr>
+<td><strong>Fonte trocada</strong> no After</td>
+<td>A fonte do Figma não está instalada no Windows. O painel avisa qual é: instale e importe de novo.</td>
+</tr>
+<tr>
+<td>Importação <strong>lenta</strong></td>
+<td>Deixe <strong>Vetores pesados viram imagem</strong> ligado. Campos de partículas com milhares de pontos são o que mais pesa.</td>
+</tr>
+<tr>
+<td>Algo <strong>diferente do Figma</strong></td>
+<td>Ligue a camada <strong>REFERÊNCIA FIGMA (guia)</strong> para comparar. O aviso no fim da importação lista o que não tem equivalente no After (ex.: blur de fundo, pontas de seta), que entra como imagem.</td>
+</tr>
+<tr>
+<td>O botão <strong>Atualizar</strong> deu erro</td>
+<td>Confira a internet e tente de novo. Se o arquivo baixado vier corrompido, nada é alterado. A versão anterior da extensão fica guardada em <code>Documentos\Figma2AE\_update\backup_&lt;versão&gt;</code>.</td>
+</tr>
+<tr>
+<td>Imagens sumiram de um projeto antigo</td>
+<td>Projetos importados antes da versão 2.3 apontavam para a pasta Recebidos. Se você apagou o pacote, importe aquele frame de novo.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estrutura de pastas:</strong> veja <code>5 - Organizacao de pastas\Organizacao de pastas.md</code>.</p></body></html>

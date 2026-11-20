@@ -1,0 +1,48 @@
+# Publica uma versão nova sozinho: quando a versão em extension/version.json muda na main,
+# gera o pacote de atualização (botão "Atualizar" do plugin) e o instalador completo,
+# e cria o Release v<versão>. Quem tem o Figma2AE vê "Atualização disponível".
+name: Publicar versão
+on:
+  push:
+    branches: [main]
+    paths: ["extension/version.json"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Versão
+        id: v
+        run: |
+          V=$(python3 -c "import json;print(json.load(open('extension/version.json'))['version'])")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if gh release view "v$V" >/dev/null 2>&1; then echo "exists=1" >> "$GITHUB_OUTPUT"; else echo "exists=0" >> "$GITHUB_OUTPUT"; fi
+        env: { GH_TOKEN: "${{ github.token }}" }
+      - name: Notas (mensagem do commit)
+        if: steps.v.outputs.exists == '0'
+        id: n
+        run: |
+          N=$(git log -1 --pretty=%B | head -c 900)
+          { echo "notes<<EOF"; echo "$N"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+      - name: Pacote de atualização
+        if: steps.v.outputs.exists == '0'
+        run: python3 tools/publicar.py "${{ steps.v.outputs.version }}" "${{ steps.n.outputs.notes }}" --no-stamp
+      - name: Studio para Windows
+        if: steps.v.outputs.exists == '0'
+        run: npx --yes @electron/packager studio/app "Figma2AE Studio" --platform=win32 --arch=x64 --electron-version=45.4.1 --out=out --overwrite
+      - name: Instalador completo
+        if: steps.v.outputs.exists == '0'
+        run: python3 tools/montar_instalador.py "${{ steps.v.outputs.version }}" "out/Figma2AE Studio-win32-x64"
+      - name: Criar Release
+        if: steps.v.outputs.exists == '0'
+        run: |
+          V="${{ steps.v.outputs.version }}"
+          gh release create "v$V" --title "Figma2AE $V" --notes "${{ steps.n.outputs.notes }}" --latest dist/$V/*.zip dist/$V/latest.json
+        env: { GH_TOKEN: "${{ github.token }}" }
