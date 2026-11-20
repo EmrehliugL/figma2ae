@@ -94,8 +94,12 @@ function swapAndRestart() {
     `$ok = $false; for ($i = 0; $i -lt 40 -and -not $ok; $i++) { try { Copy-Item -LiteralPath ${q(PEND)} -Destination ${q(dst)} -Force -ErrorAction Stop; $ok = $true } catch { "tentativa $i : $($_.Exception.Message)" | Out-File $log -Append; Start-Sleep -Milliseconds 500 } }`,
     `if ($ok) { Remove-Item -LiteralPath ${q(PEND)} -Force -ErrorAction SilentlyContinue; "ok" | Out-File $log -Append } else { "falhou" | Out-File $log -Append }`,
     `Start-Process -FilePath ${q(exe)}`
-  ].join("; ");
-  spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-Command", ps], { detached: true, stdio: "ignore", windowsHide: true }).unref();
+  ].join("\r\n");
+  // PowerShell aberto direto pelo Electron com "detached" morre sem rodar (sem console). Testado no Windows:
+  // gravar um .ps1 e abrir via "cmd /c start" funciona e sobrevive ao Studio fechar.
+  const ps1 = path.join(DOCS, "_update", "troca_studio.ps1");
+  try { fs.mkdirSync(path.dirname(ps1), { recursive: true }); fs.writeFileSync(ps1, "\ufeff" + ps, "utf8"); } catch (e) {}
+  spawn("cmd.exe", ["/c", "start", '""', "/min", "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", ps1], { detached: true, stdio: "ignore", windowsHide: true }).unref();
   setTimeout(() => app.exit(0), 1500); // exit (não quit) pra fechar tudo de uma vez
 }
 // abriu com uma troca pendente (uma tentativa anterior falhou): termina a atualização sozinho, no máximo 2 vezes
