@@ -7,7 +7,7 @@
  *  e ative Preferências > Scripting e Expressões > "Permitir que scripts gravem arquivos e acessem a rede".
  */
 (function F2AE(thisObj) {
-    var VERSION = "2.3.5";
+    var VERSION = "2.3.6";
     var SETTINGS = "Figma2AE";
     var IS_WIN = $.os.toLowerCase().indexOf("windows") >= 0;
 
@@ -210,11 +210,11 @@
         t.property("ADBE Scale").setValue([d.sx * 100 * extraScale, d.sy * 100 * extraScale]);
         if (Math.abs(d.rot) > 0.001) t.property("ADBE Rotate Z").setValue(d.rot);
     }
-    function common(layer, spec) {
+    function common(layer, spec, ctx) {
         try { layer.name = spec.name || layer.name; } catch (e) {}
         if (spec.opacity !== undefined && spec.opacity < 0.999) tr(layer).property("ADBE Opacity").setValue(spec.opacity * 100);
         if (spec.blend && BLEND[spec.blend]) { try { layer.blendingMode = BlendingMode[BLEND[spec.blend]]; } catch (e) {} }
-        if (spec.effects) each(spec.effects, function (fx) { addEffect(layer, fx); });
+        if (spec.effects) each(spec.effects, function (fx) { addEffect(layer, fx, ctx); });
     }
     function setByMatch(effect, match, value, scale255) {
         var p = effect.property(match);
@@ -222,7 +222,7 @@
         if (scale255) { var max = 255; try { if (p.hasMax) max = p.maxValue; } catch (e) {} value = max <= 100.5 ? value * 100 : value * 255; }
         try { p.setValue(value); } catch (e) {}
     }
-    function addEffect(layer, fx) {
+    function addEffect(layer, fx, ctx) {
         var parade = layer.property("ADBE Effect Parade");
         try {
             if (fx.type === "shadow") {
@@ -236,8 +236,84 @@
             } else if (fx.type === "blur") {
                 var b = parade.addProperty("ADBE Gaussian Blur 2");
                 setByMatch(b, "ADBE Gaussian Blur 2-0001", fx.radius);
+                if (fx.progressive && ctx) ctx.notes.push((layer.name || "?") + ": desfoque progressivo do Figma virou desfoque uniforme");
+            } else if (fx.type === "inner") {
+                // sombra interna = Estilo de Camada "Inner Shadow" (precisa da comp aberta; aplicado no fim da montagem)
+                if (ctx) { if (!ctx.styleQueue) ctx.styleQueue = []; ctx.styleQueue.push({ layer: layer, fx: fx }); }
             }
+            // "bgblur" é montado em addBgBlur (camada de ajuste atrás da camada)
         } catch (err) {}
+    }
+    /* desfoque de fundo: camada de ajuste com Gaussian Blur logo abaixo, recortada pela forma da camada */
+    function addBgBlur(comp, layer, spec, ctx) {
+        var fx = null; each(spec.effects || [], function (e) { if (e.type === "bgblur") fx = e; });
+        if (!fx) return;
+        var nm = spec.name || "Camada";
+        var adj = comp.layers.addSolid([1, 1, 1], nm + " · desfoque de fundo", comp.width, comp.height, comp.pixelAspect || 1, comp.duration);
+        adj.adjustmentLayer = true;
+        try { adj.source.parentFolder = ctx.fOther; } catch (e) {}
+        var gb = adj.property("ADBE Effect Parade").addProperty("ADBE Gaussian Blur 2");
+        setByMatch(gb, "ADBE Gaussian Blur 2-0001", fx.radius);
+        setByMatch(gb, "ADBE Gaussian Blur 2-0003", 1); // repetir pixels da borda
+        adj.moveAfter(layer);
+        var sh = spec.bgShape || { prim: "rect", w: spec.w, h: spec.h, radius: 0 };
+        var m = shapeMatte(comp, sh, 0, 0);
+        applyXf(m, spec.xf, 1);
+        m.name = nm + " · forma do desfoque";
+        m.moveBefore(adj);
+        try { adj.setTrackMatte(m, TrackMatteType.ALPHA); } catch (e) { try { adj.trackMatteType = TrackMatteType.ALPHA; } catch (e2) {} }
+        try { m.enabled = false; } catch (e) {}
+        try { m.parent = layer; } catch (e) {} // a forma acompanha a camada quando ela for animada
+    }
+    /* máscara do Figma ("Use as mask") → camada-máscara logo acima, como track matte de alfa/luminância */
+    function addMaskMatte(comp, layer, spec, ctx) {
+        var ms = spec.matte.spec, m;
+        if (ms.kind === "group") {
+            // grupo como máscara: monta dentro de um comp do mesmo tamanho (os filhos já estão nas coordenadas deste comp)
+            var pc = app.project.items.addComp(uniqueCompName(ctx.fPre, (ms.name || "Máscara")), comp.width, comp.height, comp.pixelAspect || 1, comp.duration, comp.frameRate);
+            pc.parentFolder = ctx.fPre; ctx.precomps++;
+            buildLayer(pc, ms, ctx);
+            m = comp.layers.add(pc);
+        } else m = buildLayer(comp, ms, ctx);
+        if (!m) { ctx.notes.push((spec.name || "?") + ": a máscara não pôde ser recriada"); return; }
+        m.name = (ms.name || "Máscara") + " · máscara";
+        m.moveBefore(layer);
+        var tt = spec.matte.type === "LUMA" ? TrackMatteType.LUMA : TrackMatteType.ALPHA;
+        try { layer.setTrackMatte(m, tt); } catch (e) { try { layer.trackMatteType = tt; } catch (e2) {} }
+        try { m.enabled = false; } catch (e) {}
+    }
+    /* Estilos de Camada (sombra interna): o After só aplica pelo menu, com a comp aberta e a camada selecionada */
+    function flushStyles(ctx) {
+        var q = ctx.styleQueue || [];
+        if (!q.length) return;
+        var cmd = 0; try { cmd = app.findMenuCommandId("Inner Shadow"); } catch (e) {}
+        if (!cmd) cmd = 9001;
+        each(q, function (it) {
+            var L = it.layer, fx = it.fx, ok = false;
+            try {
+                var comp = L.containingComp;
+                comp.openInViewer();
+                for (var i = 1; i <= comp.numLayers; i++) comp.layer(i).selected = false;
+                L.selected = true;
+                app.executeCommand(cmd);
+                L.selected = false;
+                var st = L.property("ADBE Layer Styles"), g = st ? st.property("innerShadow/enabled") : null;
+                if (g) {
+                    var set = function (k, v) { try { g.property(k).setValue(v); } catch (e) {} };
+                    var ang = Math.atan2(fx.dy, -fx.dx) * 180 / Math.PI;
+                    set("innerShadow/color", [fx.color[0], fx.color[1], fx.color[2], 1]);
+                    set("innerShadow/opacity", fx.alpha * 100);
+                    set("innerShadow/useGlobalAngle", 0);
+                    set("innerShadow/localLightingAngle", ang);
+                    set("innerShadow/distance", Math.sqrt(fx.dx * fx.dx + fx.dy * fx.dy));
+                    set("innerShadow/blur", fx.radius);
+                    if (fx.spread) set("innerShadow/chokeMatte", Math.min(100, fx.spread / Math.max(1, fx.spread + fx.radius) * 100));
+                    ok = true;
+                }
+            } catch (e) {}
+            if (!ok) ctx.notes.push((L.name || "?") + ": sombra interna não pôde ser recriada (aplique Camada > Estilos de Camada > Sombra Interna)");
+        });
+        ctx.styleQueue = [];
     }
     function addPathGroup(contents, name, geoms, dx, dy) {
         var g = contents.addProperty("ADBE Vector Group"); g.name = name;
@@ -440,6 +516,7 @@
     function shiftSpec(k, dx, dy) {
         k.xf = { a: k.xf.a, b: k.xf.b, c: k.xf.c, d: k.xf.d, tx: k.xf.tx + dx, ty: k.xf.ty + dy };
         if (k.kind === "group") each(k.children || [], function (c) { shiftSpec(c, dx, dy); }); // filhos de grupo estão no mesmo espaço
+        if (k.matte && k.matte.spec) shiftSpec(k.matte.spec, dx, dy); // a máscara fica no mesmo comp da camada recortada
     }
     function buildPrecomp(comp, spec, ctx) {
         var pad = spec.pad || 0;
@@ -686,8 +763,10 @@
             else if (spec.kind === "precomp") layer = buildPrecomp(comp, spec, ctx);
             else if (spec.kind === "paintstack") layer = buildPaintStack(comp, spec, ctx);
             else { ctx.notes.push((spec.name || "?") + ": tipo de camada desconhecido (" + spec.kind + ") — atualize o Figma2AE"); return null; }
-            common(layer, spec);
+            common(layer, spec, ctx);
             if (spec.kind === "precomp" && spec.clipRadius > 0) { try { addClipMatte(comp, layer, spec); } catch (e) {} }
+            if (spec.matte && spec.matte.spec) { try { addMaskMatte(comp, layer, spec, ctx); } catch (e) { ctx.notes.push((spec.name || "?") + ": máscara não recriada (" + e.message + ")"); } }
+            if (spec.bgShape) { try { addBgBlur(comp, layer, spec, ctx); } catch (e) { ctx.notes.push((spec.name || "?") + ": desfoque de fundo não recriado (" + e.message + ")"); } }
             ctx.layers++;
             var notes = [];
             if (spec.reason) notes.push("Imagem: " + spec.reason);
@@ -844,6 +923,7 @@
                 each(comps, function (c) { var l = master.layers.add(c); l.startTime = t; try { master.markerProperty.setValueAtTime(t, new MarkerValue(c.name)); } catch (e) {} t += c.duration; });
             }
             var show = opts.openAfter ? (master || comps[0]) : null;
+            try { flushStyles(ctx); } catch (e) {}
             if (show) { try { show.openInViewer(); } catch (e) {} }
         } finally { try { app.endSuppressDialogs(false); } catch (e) {} app.endUndoGroup(); }
         var fonts = []; for (var f in ctx.missingFonts) fonts.push(f);
@@ -892,6 +972,7 @@
             tops = seqs.concat(tops);
             var master = opts.master && tops.length > 1 ? buildMaster(tops, ctx) : null;
             var show = opts.openAfter ? (master || seqs[0] || comps[0]) : null;
+            try { flushStyles(ctx); } catch (e) {}
             if (show) { try { show.openInViewer(); } catch (e) {} }
         } finally { try { app.endSuppressDialogs(false); } catch (e) {} app.endUndoGroup(); }
         var fonts = []; for (var f in ctx.missingFonts) fonts.push(f);
@@ -944,7 +1025,7 @@
     }
 
     // expõe funções puras pra testes fora do AE
-    if (typeof F2AE_TEST !== "undefined") { F2AE_TEST.parsePath = parsePath; F2AE_TEST.decompose = decompose; return; }
+    if (typeof F2AE_TEST !== "undefined") { F2AE_TEST.parsePath = parsePath; F2AE_TEST.decompose = decompose; F2AE_TEST.buildLayer = buildLayer; F2AE_TEST.flushStyles = flushStyles; return; }
     // usado pela extensão (painel HTML): só expõe a função, sem montar a janela ScriptUI
     if (typeof F2AE_HOST !== "undefined") { F2AE_HOST.importPackage = importPackage; F2AE_HOST.buildPlan = buildPlan; F2AE_HOST.version = VERSION; return; }
     // execução automatizada (testes): F2AE_RUN = { file: "...", out: "...", opts: {...} }

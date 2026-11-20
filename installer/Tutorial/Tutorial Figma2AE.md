@@ -139,6 +139,7 @@ Fica em **Janela → Extensões → Figma2AE**.
 - Retângulos, elipses e vetores viram **shape layers**, com **Stroke nativo** (espessura, pontas, junções, tracejado, por dentro ou por fora).
 - Textos viram **texto editável**, com a mesma fonte, tamanho, cor e entrelinha.
 - Fotos entram na resolução original. Gradientes e texturas de fundo são **recriados com efeitos nativos** (Gradient Ramp, máscaras, Motion Tile) sempre que possível.
+- Efeitos simples também viram recursos nativos e editáveis: **sombra** (Drop Shadow), **sombra interna** (Estilo de Camada > Sombra Interna), **desfoque** (Gaussian Blur), **desfoque de fundo** (camada de ajuste com Gaussian Blur recortada pela forma), **contorno** (Stroke de verdade) e **máscara** (“Use as mask” vira track matte de alfa ou luminância).
 - Grupos ganham **um nulo** só quando ajuda (grupos de cima com 2 ou mais itens), sem poluir a timeline.
 - Frames que recortam o conteúdo viram **precomp**, com recorte arredondado quando têm canto.
 
@@ -173,7 +174,7 @@ Para limpar o histórico: **🗑** em cada pacote (passe o mouse), **Apagar mont
 | O painel não aparece em **Janela → Extensões** | Rode o **VERIFICAR.bat**. Se algo estiver `[FALTA]`, rode o **INSTALAR.bat** de novo e reabra o After. O registro de cada instalação fica em `Documentos\Figma2AE\instalacao.log`. |
 | **Fonte trocada** no After | A fonte do Figma não está instalada no Windows. O painel avisa qual é: instale e importe de novo. |
 | Importação **lenta** | Deixe **Vetores pesados viram imagem** ligado. Campos de partículas com milhares de pontos são o que mais pesa. |
-| Algo **diferente do Figma** | Ligue a camada **REFERÊNCIA FIGMA (guia)** para comparar. O aviso no fim da importação lista o que não tem equivalente no After (ex.: blur de fundo, pontas de seta), que entra como imagem. |
+| Algo **diferente do Figma** | Ligue a camada **REFERÊNCIA FIGMA (guia)** para comparar. O aviso no fim da importação lista o que não tem equivalente no After (ex.: pontas de seta, efeitos de vidro/ruído novos do Figma), que entra como imagem. |
 | O botão **Atualizar** deu erro | Confira a internet e tente de novo. Se o arquivo baixado vier corrompido, nada é alterado. A versão anterior da extensão fica guardada em `Documentos\Figma2AE\_update\backup_<versão>`. |
 | Imagens sumiram de um projeto antigo | Projetos importados antes da versão 2.3 apontavam para a pasta Recebidos. Se você apagou o pacote, importe aquele frame de novo. |
 

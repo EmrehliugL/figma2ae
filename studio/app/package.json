@@ -1,1 +1,1 @@
-{ "name": "figma2ae-studio", "productName": "Figma2AE Studio", "version": "2.3.5", "description": "Monta tomadas no After Effects a partir dos frames do Figma", "main": "main.js", "author": "Iug" }
+{ "name": "figma2ae-studio", "productName": "Figma2AE Studio", "version": "2.3.6", "description": "Monta tomadas no After Effects a partir dos frames do Figma", "main": "main.js", "author": "Iug" }

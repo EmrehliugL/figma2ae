@@ -12,7 +12,7 @@ Projeto do Iug (motion designer, fala português do Brasil, informal). Ele quer 
 - `installer/`: arquivos do zip de instalação (`INSTALAR.bat` aceita `/auto`; `installer/CLAUDE.md` é o roteiro de instalação para outro Claude, diferente deste arquivo).
 
 ## Testes
-`node test/test_export.js`, `test_analysis.js`, `test_studio.js`, `test_panel.js` (precisa de jsdom), `test_update.js <pasta dist/versão>`, `test_ae.js`.
+`node test/test_export.js`, `test_analysis.js`, `test_studio.js`, `test_panel.js` (precisa de jsdom), `test_update.js <pasta dist/versão>`, `test_ae.js`, `test_effects.js` (máscaras/efeitos nativos no plugin), `test_ae_effects.js` (montagem deles num After falso).
 
 ## Publicar uma versão (atualização automática pra todo mundo)
 1. `python3 tools/publicar.py X.Y.Z "o que mudou"`: carimba a versão em `extension/version.json`, `after-effects/Figma2AE.jsx`, `CSXS/manifest.xml`, `studio/app/package.json` e gera `dist/`.

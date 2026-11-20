@@ -448,11 +448,21 @@ function supportedEffects(n) {
   if (!("effects" in n) || !n.effects) return res;
   n.effects.forEach(function (e) {
     if (e.visible === false) return;
-    if (e.type === "DROP_SHADOW") res.list.push({ type: "shadow", color: [e.color.r, e.color.g, e.color.b], alpha: e.color.a, dx: e.offset.x, dy: e.offset.y, radius: e.radius || 0, spread: e.spread || 0 });
-    else if (e.type === "LAYER_BLUR") res.list.push({ type: "blur", radius: e.radius || 0 });
+    if (e.type === "DROP_SHADOW" || e.type === "INNER_SHADOW") res.list.push({ type: e.type === "DROP_SHADOW" ? "shadow" : "inner", color: [e.color.r, e.color.g, e.color.b], alpha: e.color.a, dx: e.offset.x, dy: e.offset.y, radius: e.radius || 0, spread: e.spread || 0 });
+    else if (e.type === "LAYER_BLUR") res.list.push({ type: "blur", radius: e.radius || 0, progressive: e.blurType === "PROGRESSIVE" });
+    else if (e.type === "BACKGROUND_BLUR") res.list.push({ type: "bgblur", radius: e.radius || 0 });
     else res.unsupported.push(e.type);
   });
   return res;
+}
+/* forma usada como recorte do desfoque de fundo (o After desfoca o que está atrás, só dentro dessa forma) */
+function bgBlurShape(node) {
+  var w = r2(node.width), h = r2(node.height);
+  if (node.type === "ELLIPSE" && (!node.arcData || Math.abs(node.arcData.endingAngle - node.arcData.startingAngle - 2 * Math.PI) < 1e-3 && !node.arcData.innerRadius)) return { prim: "ellipse", w: w, h: h };
+  if ((node.type === "RECTANGLE" || CONTAINER_TYPES[node.type]) && node.type !== "GROUP" && !isMixed(node.cornerRadius)) return { prim: "rect", w: w, h: h, radius: node.cornerRadius || 0 };
+  var g = null; try { g = node.fillGeometry; } catch (e) {}
+  if (g && g.length) return { prim: "path", w: w, h: h, fillGeometry: geomList(g) };
+  return { prim: "rect", w: w, h: h, radius: 0 };
 }
 function hasMaskChild(n) { return "children" in n && n.children.some(function (c) { return c.isMask && c.visible !== false; }); }
 function effectPad(n, depth) {
@@ -731,11 +741,11 @@ Exporter.prototype.spec = async function (node, containerAbs, depth) {
   var base = this.baseOf(node, containerAbs, fx);
   if (fx.unsupported.length && !CONTAINER_TYPES[node.type]) return this.raster(node, containerAbs, base, SHAPE_TYPES[node.type] ? "VECTORS" : "OTHER", "efeito sem equivalente nativo: " + fx.unsupported.join(", "));
   if (fx.unsupported.length) base.notes.push("efeitos ignorados: " + fx.unsupported.join(", "));
+  if (fx.list.some(function (e) { return e.type === "bgblur"; })) base.bgShape = bgBlurShape(node);
 
   if (node.type === "TEXT") return this.textSpec(node, base, containerAbs);
 
   if (CONTAINER_TYPES[node.type] && "children" in node) {
-    if (hasMaskChild(node)) return this.raster(node, containerAbs, base, "OTHER", "grupo com máscara");
     if (depth > 10) return this.raster(node, containerAbs, base, "OTHER", "aninhamento muito profundo");
     var kids = node.children.filter(function (c) { return c.visible !== false; });
     var i, bg;
@@ -756,7 +766,8 @@ Exporter.prototype.spec = async function (node, containerAbs, depth) {
     base.children = [];
     bg = await this.frameBg(node, abs, "fill");
     if (bg) base.children.push(bg);
-    for (i = 0; i < kids.length; i++) base.children.push(await this.spec(kids[i], abs, depth + 1));
+    var specs = await this.childSpecs(kids, abs, depth + 1, base.w, base.h, node.type !== "GROUP" && node.clipsContent ? 0 : effectPad(node, 0));
+    for (i = 0; i < specs.length; i++) base.children.push(specs[i]);
     bg = await this.frameBg(node, abs, "stroke");
     if (bg) base.children.push(bg);
     return base;
@@ -772,6 +783,28 @@ Exporter.prototype.spec = async function (node, containerAbs, depth) {
     return this.paintSpec(node, base, containerAbs, false);
   }
   return this.raster(node, containerAbs, base, "OTHER", "tipo " + node.type + " sem equivalente nativo");
+};
+/* filhos de um contêiner, respeitando as máscaras do Figma: a camada com "Use as mask" recorta todas as irmãs
+   acima dela (até a próxima máscara) → no After vira um precomp com as camadas recortadas + a máscara como
+   track matte de alfa/luminância (tudo editável, nada vira PNG). onEach(spec, node) é chamado pra cada filho. */
+Exporter.prototype.childSpecs = async function (kids, abs, depth, w, h, pad, onEach) {
+  var out = [], run = null;
+  for (var i = 0; i < kids.length; i++) {
+    var kd = kids[i];
+    if (kd.isMask) {
+      var ms = await this.spec(kd, abs, depth);
+      if (kd.maskType === "VECTOR") { ms.opacity = 1; (ms.fills || []).forEach(function (f) { f.alpha = 1; }); }
+      run = { kind: "precomp", name: kd.name + " · mascarado", figmaType: "MASK", xf: { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 },
+        w: r2(w), h: r2(h), pad: pad || 0, opacity: 1, blend: "NORMAL", effects: [], notes: [], children: [],
+        matte: { spec: ms, type: kd.maskType === "LUMINANCE" ? "LUMA" : "ALPHA" } };
+      out.push(run);
+      continue;
+    }
+    var ks = await this.spec(kd, abs, depth);
+    if (onEach) onEach(ks, kd);
+    if (run) run.children.push(ks); else out.push(ks);
+  }
+  return out;
 };
 Exporter.prototype.textSpec = async function (node, base, containerAbs) {
   var segs = [];
@@ -994,12 +1027,11 @@ async function exportFrames(req) {
       }
     }
     var nodes = t.nodes || t.frame.children.filter(function (c) { return c.visible !== false; });
-    for (var k = 0; k < nodes.length; k++) {
-      var spec = await ex.spec(nodes[k], frameAbs, 0);
-      var c = cont && cont[nodes[k].id];
+    var top = await ex.childSpecs(nodes, frameAbs, 0, t.frame ? t.frame.width : 0, t.frame ? t.frame.height : 0, 0, function (spec, nd) {
+      var c = cont && cont[nd.id];
       if (c) spec.identity = { id: c.identity, presence: c.presence, state: "F" + pad2(t.info.index + 1), status: c.status, diffs: c.diffs, confidence: c.confidence };
-      out.layers.push(spec);
-    }
+    });
+    for (var k = 0; k < top.length; k++) out.layers.push(top[k]);
     if (t.frame && opts.includeBg !== false) { var st = await ex.frameBg(t.frame, frameAbs, "stroke"); if (st) out.layers.push(st); }
     // referência do Figma (camada-guia no AE pra conferir o design)
     if (opts.reference !== false && t.frame) {
