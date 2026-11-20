@@ -30,7 +30,7 @@ function criar() {
 app.on("second-instance", () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 app.whenReady().then(() => {
   { const prev = process.noAsar; process.noAsar = true; const pending = finishPendingSwap(); process.noAsar = prev; if (pending) return; }
-  try { fs.unlinkSync(path.join(DOCS, "_update", "troca_tentativas.txt")); } catch (e) {}
+  { const prev = process.noAsar; process.noAsar = true; if (!fs.existsSync(PEND)) { try { fs.unlinkSync(path.join(DOCS, "_update", "troca_tentativas.txt")); } catch (e) {} } process.noAsar = prev; }
   criar();
   fs.mkdirSync(BASE, { recursive: true });
   // avisa o After Effects que o Studio está aberto (aí o painel não importa sozinho)
