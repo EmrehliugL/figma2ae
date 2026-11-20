@@ -30,6 +30,8 @@ def stamp(version):
     sub("after-effects/Figma2AE.jsx", r'var VERSION = "[^"]*"', f'var VERSION = "{version}"')
     sub("extension/CSXS/manifest.xml", r'(Version|ExtensionBundleVersion)="\d+\.\d+\.\d+"', lambda m: f'{m.group(1)}="{version}"')
     sub("studio/app/package.json", r'"version": "[^"]*"', f'"version": "{version}"')
+    sub("figma-plugin/ui.html", r'const F2AE_VERSION = "[^"]*"', f'const F2AE_VERSION = "{version}"')
+    sub("figma-plugin/ui.html", r'(id="vchip"[^>]*>)v[^<]*<', lambda m: m.group(1) + "v" + version + "<")
     # o Studio usa o mesmo atualizador da extensão
     import shutil
     for f in ("updater.js", "paths.js"):

@@ -71,15 +71,13 @@ function unzipTo(buf, dir) {
 }
 if (!fs.existsSync(path.join(EXT_DIR, "version.json"))) { try { fs.mkdirSync(EXT_DIR, { recursive: true }); } catch (e) {} }
 const upd = Updater.create({
-  extDir: EXT_DIR, docsDir: DOCS, unzip: unzipTo,
+  extDir: EXT_DIR, docsDir: DOCS, unzip: unzipTo, fallbackVersion: app.getVersion(),
   studioOpen: () => true, // o próprio Studio está aberto: a troca dele é feita ao reiniciar
   studioDir: path.dirname(path.dirname(app.getAppPath())), // ...\Figma2AE Studio\resources\app.asar → pasta do Studio
   log: m => console.log("[update] " + m)
 });
-// sem a extensão instalada, a versão local é a do próprio Studio
-if (upd.state.current === "0") upd.state.current = app.getVersion();
 function updInfo() { const s = upd.state; return { current: s.current, latest: s.latest, available: s.available, notes: s.notes, busy: s.busy, phase: s.phase, progress: s.progress, error: s.error, studio: app.getVersion() }; }
-async function checarUpd(force) { await upd.check(force); if (upd.state.current === "0") upd.state.current = app.getVersion(); if (win) win.webContents.send("upd", updInfo()); return updInfo(); }
+async function checarUpd(force) { await upd.check(force); if (win) win.webContents.send("upd", updInfo()); return updInfo(); }
 ipcMain.handle("upd:check", (e, force) => checarUpd(!!force));
 ipcMain.handle("upd:apply", async () => {
   const tick = setInterval(() => win && win.webContents.send("upd", updInfo()), 400);

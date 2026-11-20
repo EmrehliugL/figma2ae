@@ -95,6 +95,22 @@ input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px;margin:0}
 .res ul{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:12px;max-height:160px;overflow:auto}
 .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--faint);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+/* ===== refinamento visual (2.3.2) ===== */
+.empty{display:flex!important;flex-direction:column;align-items:center;gap:14px}
+.empty > b{font-size:15px}
+.btn,.pk,.ubtn,.ulink,select,input{transition:background-color .14s,border-color .14s,color .14s,box-shadow .14s,transform .08s,opacity .14s}
+.btn:active:not(:disabled),.ubtn:active{transform:translateY(1px)}
+.btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #5aa9f5;outline-offset:1px}
+.btn.primary{background:linear-gradient(180deg,#3796ee,#2a84de);box-shadow:0 1px 0 #ffffff1f inset,0 2px 10px #2d8ceb33}
+.btn.primary:hover:not(:disabled){background:linear-gradient(180deg,#4aa2f2,#3390e6)}
+.btn.primary:disabled{background:#2e3b48;border-color:#2e3b48;box-shadow:none;color:#8a99a8}
+.title{background:linear-gradient(180deg,#202020,#1b1b1b)}
+.uver{color:#9fbfe2;background:#2d8ceb1f;border:1px solid #2d8ceb40;border-radius:99px;padding:1px 8px;font-size:10.5px;font-weight:600}
+.pk:hover{background:#262626}
+.modal{animation:fadein .16s ease-out}.modal .box{animation:popin .18s ease-out}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes popin{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>

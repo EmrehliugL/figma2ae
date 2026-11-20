@@ -45,7 +45,8 @@ function create(o) {
   const log = o.log || (() => {});
   const st = { current: localVersion(), latest: null, notes: "", available: false, checking: false, lastCheck: 0, error: "", busy: false, progress: 0, phase: "", studioPending: false, done: "" };
 
-  function localVersion() { try { return JSON.parse(fs.readFileSync(path.join(o.extDir, "version.json"), "utf8")).version || "0"; } catch (e) { return "0"; } }
+  // sem a extensão instalada (só o Studio), vale a versão que quem chamou informar
+  function localVersion() { try { return JSON.parse(fs.readFileSync(path.join(o.extDir, "version.json"), "utf8")).version || o.fallbackVersion || "0"; } catch (e) { return o.fallbackVersion || "0"; } }
   let info = null;
 
   async function check(force) {
