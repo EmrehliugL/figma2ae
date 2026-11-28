@@ -1314,7 +1314,7 @@ async function handle(msg) {
       post({ type: "quickExported", manifest: qr.manifest, files: qr.files, count: qr.count, mode: msg.mode, name: asciiName(figma.root.name + " - quick") });
     } else if (msg.type === "quickMode") {
       // janelinha flutuante do Quick Import (ou volta pro tamanho normal)
-      if (msg.on) figma.ui.resize(300, 300);
+      if (msg.on) figma.ui.resize(206, 52);
       else figma.clientStorage.getAsync("f2ae_size").then(function (sz) { figma.ui.resize(sz && sz.w ? sz.w : 520, sz && sz.h ? sz.h : 620); }).catch(function () { figma.ui.resize(520, 620); });
     } else if (msg.type === "setWhole") {
       WHOLE = {}; (msg.whole || []).forEach(function (id) { WHOLE[id] = true; }); sendSelection();
@@ -1342,7 +1342,7 @@ async function handle(msg) {
 if (typeof figma !== "undefined" && !(typeof globalThis !== "undefined" && globalThis.__F2AE_TEST__)) {
   var saveSizeT = 0;
   QUICK_START = figma.command === "quick";
-  figma.showUI(__html__, QUICK_START ? { width: 300, height: 300, themeColors: false, title: "Figma2AE · Quick Import" } : { width: 520, height: 620, themeColors: false, title: "Figma2AE" });
+  figma.showUI(__html__, QUICK_START ? { width: 206, height: 52, themeColors: false, title: "Quick Import" } : { width: 520, height: 620, themeColors: false, title: "Figma2AE" });
   if (!QUICK_START) figma.clientStorage.getAsync("f2ae_size").then(function (sz) { if (sz && sz.w && sz.h) figma.ui.resize(sz.w, sz.h); }).catch(function () {});
   figma.ui.onmessage = handle;
   figma.on("selectionchange", sendSelection);

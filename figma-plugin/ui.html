@@ -135,65 +135,38 @@ input[type=number]{-moz-appearance:textfield}
 .f2num .stp button:active{background:#2d8ceb;color:#fff}
 .f2num .stp svg{width:7px;height:5px;display:block}
 
-/* ===== Quick Import (v2.7): janelinha flutuante, visual clean ===== */
+/* ===== Quick Import (v2.8): barrinha só com ícones ===== */
 .qbtn{display:inline-flex;align-items:center;gap:5px;border:1px solid #2d8ceb55;background:#2d8ceb14;color:#9fc8f5;border-radius:99px;padding:3px 10px 3px 8px;font-size:11px;font-weight:600;white-space:nowrap;flex:none}
 .qbtn svg{width:11px;height:11px}
 .qbtn:hover{background:#2d8ceb2e;color:#fff;border-color:#2d8ceb99}
-#quick{display:none;flex-direction:column;height:100%;padding:12px 12px 10px;gap:10px;background:radial-gradient(120% 60% at 50% 0%,#1f2a36 0%,#1b1b1b 60%)}
-body.isquick .app{display:none}
+#quick{display:none;align-items:center;gap:6px;height:100%;padding:0 8px;background:#1e1e1e}
+body.isquick .app,body.isquick .rz{display:none}
 body.isquick #quick{display:flex}
-.qh{display:flex;align-items:center;gap:8px}
-.qh .qlogo{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:linear-gradient(135deg,#2d8ceb,#5b5bd6);box-shadow:0 2px 10px #2d8ceb40;flex:none}
-.qh .qlogo svg{width:12px;height:12px;color:#fff}
-.qh .qt{flex:1;min-width:0;line-height:1.15}
-.qh .qt b{display:block;font-size:12.5px;color:#f2f2f2;font-weight:650;letter-spacing:.1px}
-.qh .qt small{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#8b8b8b}
-.qh .qt small .aedot{width:6px;height:6px}
-.qback{width:24px;height:24px;border-radius:6px;border:1px solid transparent;background:transparent;color:#8b8b8b;display:grid;place-items:center;padding:0;flex:none}
-.qback svg{width:13px;height:13px}
-.qback:hover{background:#2a2a2a;border-color:#353535;color:#eee}
-.qsel{flex:1;min-height:0;overflow:auto;border-radius:8px;background:#ffffff06;border:1px solid #ffffff10;padding:4px}
-.qitem{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:11.5px;color:#d6d6d6;animation:qin .16s ease-out both}
-.qitem:hover{background:#ffffff08}
-.qitem .qi{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;flex:none;background:#ffffff0d;color:#a8a8a8}
-.qitem .qi svg{width:11px;height:11px}
-.qitem .qi.tx{color:#e7c86b;background:#e7c86b17}.qitem .qi.sh{color:#7fb6f2;background:#2d8ceb1c}.qitem .qi.gr{color:#a79af0;background:#7b6ff01c}.qitem .qi.im{color:#8ccf9e;background:#8ccf9e17}
-.qitem span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qitem em{font-style:normal;font-size:9.5px;color:#6f6f6f;text-transform:uppercase;letter-spacing:.5px}
-.qmore{font-size:10.5px;color:#6f6f6f;padding:3px 8px}
-@keyframes qin{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
-.qempty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;color:#7a7a7a;font-size:11px;line-height:1.45;padding:8px 14px}
-.qempty .qcur{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#ffffff08;border:1px dashed #ffffff22;color:#9fc8f5}
-.qempty .qcur svg{width:16px;height:16px}
-.qempty b{color:#cfcfcf;font-weight:600}
-.qgo{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.qact{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:9px 10px 8px;border-radius:8px;border:1px solid #ffffff14;background:#ffffff08;color:#e8e8e8;transition:background-color .14s,border-color .14s,transform .08s,box-shadow .14s}
-.qact .qa1{display:flex;align-items:center;gap:6px;font-weight:650;font-size:12px}
-.qact .qa1 svg{width:13px;height:13px;flex:none}
-.qact small{font-size:10px;color:#8d8d8d;line-height:1.2}
-.qact:hover:not(:disabled){background:#ffffff10;border-color:#ffffff26}
-.qact:active:not(:disabled){transform:translateY(1px)}
-.qact.main{background:linear-gradient(180deg,#3796ee,#2a84de);border-color:#3b97ee;box-shadow:0 1px 0 #ffffff26 inset,0 4px 14px #2d8ceb38}
-.qact.main small{color:#d9ebff}
-.qact.main:hover:not(:disabled){background:linear-gradient(180deg,#4aa2f2,#3390e6);border-color:#4aa2f2;box-shadow:0 1px 0 #ffffff2e inset,0 5px 18px #2d8ceb55}
-.qact:disabled{opacity:.38;cursor:default;box-shadow:none}
-.qact .qn{position:absolute;top:7px;right:8px;font-size:10px;font-weight:700;color:#fff;background:#ffffff26;border-radius:99px;padding:0 6px;line-height:16px}
-.qact .qn:empty{display:none}
-.qfoot{display:flex;align-items:center;gap:8px;min-height:22px}
-.qseg{display:inline-flex;background:#ffffff08;border:1px solid #ffffff12;border-radius:7px;padding:2px;flex:none}
-.qseg button{border:0;background:transparent;color:#8d8d8d;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:5px;line-height:15px}
-.qseg button:hover{color:#ddd}
-.qseg button.on{background:#2d8ceb;color:#fff}
-.qfoot label{font-size:10px;color:#6f6f6f;flex:none}
-.qst{flex:1;min-width:0;font-size:10.5px;color:#8d8d8d;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qst.ok{color:#8ccf9e}.qst.err{color:#ef8f75}.qst.busy{color:#9fc8f5}
-.qst .spin{width:9px;height:9px;border-width:1.5px;vertical-align:-1px}
+.qi-btn{position:relative;overflow:visible;width:40px;height:36px;border-radius:8px;border:1px solid #ffffff12;background:#ffffff08;color:#d8d8d8;display:grid;place-items:center;padding:0;flex:none;transition:background-color .12s,border-color .12s,color .12s,transform .08s}
+.qi-btn svg{width:18px;height:18px}
+.qi-btn:hover:not(:disabled){background:#ffffff14;border-color:#ffffff2a;color:#fff}
+.qi-btn:active:not(:disabled){transform:scale(.94)}
+.qi-btn:disabled{opacity:.35;cursor:default}
+.qi-btn.main{background:#2d8ceb;border-color:#3b97ee;color:#fff}
+.qi-btn.main:hover:not(:disabled){background:#4aa2f2;border-color:#4aa2f2}
+.qi-btn .qn{position:absolute;z-index:2;top:-5px;right:-5px;min-width:15px;height:15px;padding:0 4px;border-radius:99px;background:#f2f2f2;color:#1b1b1b;font-size:9.5px;font-weight:800;line-height:15px;text-align:center;box-shadow:0 0 0 2px #1e1e1e}
+.qi-btn .qn:empty{display:none}
+.qi-btn.ok{background:#2f9e5b!important;border-color:#3cb36c!important;color:#fff!important}
+.qi-btn.err{background:#b5503c!important;border-color:#cf6450!important;color:#fff!important;animation:qshake .3s}
+.qi-btn.busy svg{animation:qpulse .8s ease-in-out infinite}
+@keyframes qshake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+@keyframes qpulse{50%{opacity:.35}}
+.qsm{width:28px;height:28px;border-radius:7px;border:0;background:transparent;color:#8a8a8a;display:grid;place-items:center;padding:0;flex:none;font-size:10.5px;font-weight:700}
+.qsm svg{width:14px;height:14px}
+.qsm:hover{background:#ffffff10;color:#eee}
+.qsep{width:1px;height:22px;background:#ffffff14;flex:none}
+#qdot{width:7px;height:7px;flex:none;margin:0 2px}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><img class="logo" src="data:image/png;base64,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" alt="">Figma2AE<span class="vchip" id="vchip" title="Versão do plugin">v2.7.0</span></div>
+    <div class="brand"><img class="logo" src="data:image/png;base64,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" alt="">Figma2AE<span class="vchip" id="vchip" title="Versão do plugin">v2.8.0</span></div>
     <div class="status" id="status">Selecione o que quer levar pro After Effects.</div>
     <button class="qbtn" id="qopen" title="Janelinha flutuante: clique em camadas no Figma e importe soltas na comp aberta do After"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9.2 1 3 9h4.2L6.6 15 13 6.8H8.7z"/></svg> Quick Import</button>
     <div class="aepill" id="aepill" title="Painel Figma2AE no After Effects"><span class="aedot" id="aedot"></span><span id="aetxt">AE</span></div>
@@ -217,25 +190,18 @@ body.isquick #quick{display:flex}
   </div>
 </div>
 <div id="quick">
-  <div class="qh">
-    <div class="qlogo"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9.2 1 3 9h4.2L6.6 15 13 6.8H8.7z"/></svg></div>
-    <div class="qt"><b>Quick Import</b><small><span class="aedot" id="qdot"></span><span id="qae">After Effects</span></small></div>
-    <button class="qback" id="qclose" title="Voltar pro Figma2AE completo"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4 2.5 8l4 4M3 8h7.5a3 3 0 0 1 0 6H9"/></svg></button>
-  </div>
-  <div class="qsel" id="qsel"></div>
-  <div class="qgo">
-    <button class="qact main" id="qvec" disabled title="Cada camada vira shape ou texto editável, solta na comp aberta (sem precomp)"><span class="qn" id="qn1"></span><span class="qa1"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 2 14 5.2 8 8.4 2 5.2z"/><path d="m2 8.2 6 3.2 6-3.2M2 11l6 3.2 6-3.2"/></svg> Editável</span><small>shape e texto</small></button>
-    <button class="qact" id="qras" disabled title="Cada camada vira uma imagem PNG separada (com transparência), na mesma posição"><span class="qn" id="qn2"></span><span class="qa1"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="2"/><circle cx="6" cy="6.6" r="1.2"/><path d="m3 12 3.5-3.5 2.5 2.5 1.8-1.8L14 12.4"/></svg> Imagem</span><small>um PNG por camada</small></button>
-  </div>
-  <div class="qfoot">
-    <div class="qseg" id="qseg" title="Qualidade das imagens (modo Imagem)"><button data-s="1">1x</button><button data-s="2" class="on">2x</button><button data-s="3">3x</button><button data-s="4">4x</button></div>
-    <input type="hidden" id="qScale" value="2">
-    <div class="qst" id="qst"></div>
-  </div>
+  <span class="aedot" id="qdot" title="After Effects"></span>
+  <button class="qi-btn main" id="qvec" disabled title="Importar editável: shape e texto nativos, soltos na comp aberta"><span class="qn" id="qn1"></span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M11.2 2.8 17.2 8.8l-2.3 1.2-1.3 4.8-8.6 2.6 2.6-8.6 4.8-1.3z"/><path d="M5 15 9.2 10.8"/><circle cx="10.4" cy="9.6" r="1.4" fill="currentColor" stroke="none"/></svg></button>
+  <button class="qi-btn" id="qras" disabled title="Importar como imagem: um PNG separado pra cada camada"><span class="qn" id="qn2"></span><svg viewBox="0 0 20 20" fill="currentColor"><rect x="3" y="3" width="4" height="4" rx=".6"/><rect x="8" y="3" width="4" height="4" rx=".6" opacity=".55"/><rect x="13" y="3" width="4" height="4" rx=".6"/><rect x="3" y="8" width="4" height="4" rx=".6" opacity=".55"/><rect x="8" y="8" width="4" height="4" rx=".6"/><rect x="13" y="8" width="4" height="4" rx=".6" opacity=".55"/><rect x="3" y="13" width="4" height="4" rx=".6"/><rect x="8" y="13" width="4" height="4" rx=".6" opacity=".55"/><rect x="13" y="13" width="4" height="4" rx=".6"/></svg></button>
+  <button class="qsm" id="qq" title="Qualidade da imagem (clique pra trocar)">2x</button>
+  <input type="hidden" id="qScale" value="2">
+  <span class="qsep"></span>
+  <button class="qsm" id="qclose" title="Voltar pro Figma2AE completo"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h3v3M13 3 8.5 7.5M6 4H4.5A1.5 1.5 0 0 0 3 5.5v6A1.5 1.5 0 0 0 4.5 13h6a1.5 1.5 0 0 0 1.5-1.5V10"/></svg></button>
+  <span id="qst" hidden></span>
 </div>
 <div class="rz" id="rz"></div>
 <script>
-const F2AE_VERSION = "2.7.0"; // carimbado pelo tools/publicar.py
+const F2AE_VERSION = "2.8.0"; // carimbado pelo tools/publicar.py
 const $ = s => document.querySelector(s);
 setTimeout(() => { const v = document.getElementById("vchip"); if (v) v.textContent = "v" + F2AE_VERSION; }, 0);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -305,45 +271,44 @@ OPT_KEYS.forEach(k => $("#" + k).onchange = () => { try { const o = {}; OPT_KEYS
 
 /* ---------- Quick Import ---------- */
 let QUICK = false, QSEL = [], qbusy = false;
-const QICON = {
-  tx: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 3.5h10M8 3.5V13"/></svg>',
-  sh: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="11" height="11" rx="3"/></svg>',
-  gr: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="7" height="7" rx="1.6"/><rect x="7" y="7" width="7" height="7" rx="1.6"/></svg>',
-  im: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="m3 12 3.5-3.5 2.5 2.5 1.8-1.8L14 12.4"/></svg>'
-};
-const QTYPE = { TEXT: ["tx", "texto"], RECTANGLE: ["sh", "forma"], ELLIPSE: ["sh", "forma"], VECTOR: ["sh", "vetor"], LINE: ["sh", "linha"], STAR: ["sh", "forma"], POLYGON: ["sh", "forma"],
-  BOOLEAN_OPERATION: ["sh", "vetor"], GROUP: ["gr", "grupo"], FRAME: ["gr", "frame"], SECTION: ["gr", "seção"], INSTANCE: ["gr", "instância"], COMPONENT: ["gr", "componente"], COMPONENT_SET: ["gr", "variantes"] };
-function qstatus(t, kind) { const el = $("#qst"); el.className = "qst" + (kind ? " " + kind : ""); el.innerHTML = kind === "busy" ? '<span class="spin"></span> ' + esc(t) : esc(t); el.title = t || ""; }
+let qflashT = 0;
+function qstatus(t, kind) {
+  // sem texto na barrinha: o resultado aparece no próprio botão (verde = foi, vermelho = erro) e no tooltip
+  const btn = QLAST === "raster" ? $("#qras") : $("#qvec");
+  ["#qvec", "#qras"].forEach(id => $(id).classList.remove("ok", "err", "busy"));
+  $("#qst").textContent = t || "";
+  if (!kind) return;
+  btn.classList.add(kind);
+  if (t) btn.title = t;
+  clearTimeout(qflashT);
+  if (kind === "ok" || kind === "err") qflashT = setTimeout(() => { btn.classList.remove(kind); qtitles(); }, kind === "ok" ? 1400 : 3200);
+}
+let QLAST = "vector";
+function qtitles() {
+  $("#qvec").title = "Importar editável: shape e texto nativos, soltos na comp aberta";
+  $("#qras").title = "Importar como imagem: um PNG separado pra cada camada";
+}
 function qrender() {
-  const el = $("#qsel");
-  if (QSEL.length) {
-    el.innerHTML = QSEL.map(q => { const t = QTYPE[q.type] || ["im", String(q.type || "").toLowerCase()];
-      return `<div class="qitem"><span class="qi ${t[0]}">${QICON[t[0]]}</span><span>${esc(q.name)}</span><em>${esc(t[1])}</em></div>`; }).join("") +
-      (QSEL.length >= 50 ? '<div class="qmore">e mais…</div>' : "");
-  } else {
-    el.innerHTML = `<div class="qempty"><div class="qcur"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 2.5 12.5 7 8.3 8.3 7 12.5z"/><path d="M9 9l3.5 3.5" stroke-linecap="round"/></svg></div>
-      <div><b>Clique numa camada no Figma</b><br>ou em várias, com Shift</div></div>`;
-  }
   const can = QSEL.length && !qbusy, n = QSEL.length > 1 ? String(QSEL.length) : "";
   $("#qvec").disabled = !can; $("#qras").disabled = !can;
   $("#qn1").textContent = n; $("#qn2").textContent = n;
   $("#qdot").className = "aedot" + (AE.on ? " on" : "");
-  $("#qae").textContent = AE.on ? "After Effects conectado" : "After Effects desconectado";
+  $("#qdot").title = AE.on ? "After Effects conectado" : "After Effects desconectado";
 }
 function setQuick(on) {
   QUICK = on; document.body.classList.toggle("isquick", on);
   send({ type: "quickMode", on });
-  if (on) { qstatus(""); qrender(); }
+  if (on) { qstatus(""); qtitles(); qrender(); }
 }
 $("#qopen").onclick = () => setQuick(true);
 $("#qclose").onclick = () => setQuick(false);
-function qscale(v) { $("#qScale").value = v; document.querySelectorAll("#qseg button").forEach(b => b.classList.toggle("on", b.dataset.s === String(v))); try { localStorage.setItem("f2ae_qscale", v); } catch (e) {} }
+function qscale(v) { $("#qScale").value = v; $("#qq").textContent = v + "x"; try { localStorage.setItem("f2ae_qscale", v); } catch (e) {} }
 try { const qs = localStorage.getItem("f2ae_qscale"); if (qs) qscale(qs); } catch (e) {}
-$("#qseg").onclick = e => { const b = e.target.closest("button[data-s]"); if (b) qscale(b.dataset.s); };
+$("#qq").onclick = () => qscale(+$("#qScale").value % 4 + 1);
 function quickGo(mode) {
   if (!QSEL.length || qbusy) return;
   if (!AE.on) { qstatus("Abra o After Effects", "err"); return; }
-  qbusy = true; qrender(); qstatus(mode === "raster" ? "Rasterizando…" : "Exportando…", "busy");
+  QLAST = mode; qbusy = true; qrender(); qstatus(mode === "raster" ? "Rasterizando…" : "Exportando…", "busy");
   send({ type: "quickExport", mode, options: { rasterScale: +$("#qScale").value, heavyRaster: $("#oHeavy").checked, splitLines: false } });
 }
 $("#qvec").onclick = () => quickGo("vector");
@@ -357,7 +322,7 @@ async function quickSend(m) {
     if (!j.ok) throw new Error(j.error || "o After recusou");
     const n = j.layers || m.count;
     qstatus(`✓ ${n} camada${n > 1 ? "s" : ""} em ${j.comp}` + (j.notes && j.notes.length ? ` · ${j.notes.length} aviso${j.notes.length > 1 ? "s" : ""}` : ""), "ok");
-    if (j.notes && j.notes.length) $("#qst").title = j.notes.join("\n");
+    if (j.notes && j.notes.length) (QLAST === "raster" ? $("#qras") : $("#qvec")).title = j.notes.join("\n");
   } catch (e) {
     qstatus(/Failed to fetch|NetworkError/i.test(e.message) ? "Não achei o After Effects. Ele está aberto?" : "Erro: " + e.message, "err");
   } finally { qbusy = false; qrender(); }
