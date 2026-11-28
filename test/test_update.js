@@ -46,7 +46,7 @@ const srv = http.createServer((q, s) => {
   assert.strictEqual(fs.readFileSync(path.join(studio, "resources", "app.asar"), "utf8"), "asar antigo");
   studioOpen = false; u.applyPendingStudio();
   assert.ok(fs.statSync(path.join(studio, "resources", "app.asar")).size > 1000, "Studio trocado depois de fechar");
-  assert.ok(fs.existsSync(path.join(docs, "_update", "backup_2.3.0", "server.html")), "backup da versão anterior");
+  assert.ok(fs.existsSync(path.join(docs, "_update", "backup_2.3.0", "extension", "server.html")), "backup da versão anterior");
   await u.check(true); assert.ok(!u.state.available, "depois de atualizar, nada novo");
   os.homedir = realHome; srv.close();
   console.log("TODOS OS TESTES DO ATUALIZADOR PASSARAM");
