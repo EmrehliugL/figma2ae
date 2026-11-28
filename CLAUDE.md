@@ -9,6 +9,7 @@ Projeto do Iug (motion designer, fala português do Brasil, informal). Ele quer 
 - `studio/app/`: Electron (`engine.js` análise de tomadas, `main.js`, `index.html`). Tem o botão **"Atualizar tudo"** na barra de título: atualiza plugin do Figma + extensão do After + o próprio Studio (reinicia sozinho). `studio/app/updater.js` é cópia de `extension/updater.js` (o `publicar.py` copia).
 - `extension/paths.js`: pasta Documentos de verdade (registro do Windows; com OneDrive não é `%USERPROFILE%\Documents`). Use sempre ela pra `Figma2AE\Recebidos`, Biblioteca etc. O Studio usa `app.getPath("documents")`, que é a mesma.
 - Fluxo do que chega do Figma: Studio aberto → ele recebe; Studio instalado e fechado → o receptor abre o Studio; opção "Mandar pro Figma2AE Studio" desligada no painel → vai pro painel.
+- `installer/setup.nsi` + `tools/montar_setup.py`: instalador universal **Figma2AE_Setup_vX.Y.Z.exe** (NSIS, só usuário atual, sem admin): plugin → `Documentos\Figma2AE\figma-plugin`, extensão → CEP + PlayerDebugMode, Studio → `%LOCALAPPDATA%\Programs` com atalhos, desinstalador em Aplicativos. O workflow gera e anexa no Release. O import do plugin no Figma continua manual (o instalador copia o caminho do manifesto).
 - `installer/`: arquivos do zip de instalação (`INSTALAR.bat` aceita `/auto`; `installer/CLAUDE.md` é o roteiro de instalação para outro Claude, diferente deste arquivo).
 
 ## Testes

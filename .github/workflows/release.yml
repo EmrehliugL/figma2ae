@@ -37,9 +37,14 @@ jobs:
       - name: Instalador completo
         if: steps.v.outputs.exists == '0'
         run: python3 tools/montar_instalador.py "${{ steps.v.outputs.version }}" "out/Figma2AE Studio-win32-x64"
+      - name: Instalador .exe (um arquivo só)
+        if: steps.v.outputs.exists == '0'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq nsis
+          python3 tools/montar_setup.py "${{ steps.v.outputs.version }}" "out/Figma2AE Studio-win32-x64"
       - name: Criar Release
         if: steps.v.outputs.exists == '0'
         run: |
           V="${{ steps.v.outputs.version }}"
-          gh release create "v$V" --title "Figma2AE $V" --notes-file /tmp/notes.txt --latest dist/$V/*.zip dist/$V/latest.json
+          gh release create "v$V" --title "Figma2AE $V" --notes-file /tmp/notes.txt --latest dist/$V/*.exe dist/$V/*.zip dist/$V/latest.json
         env: { GH_TOKEN: "${{ github.token }}" }
