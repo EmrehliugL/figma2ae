@@ -7,7 +7,7 @@
  *  e ative Preferências > Scripting e Expressões > "Permitir que scripts gravem arquivos e acessem a rede".
  */
 (function F2AE(thisObj) {
-    var VERSION = "2.6.0";
+    var VERSION = "2.7.0";
     var SETTINGS = "Figma2AE";
     var IS_WIN = $.os.toLowerCase().indexOf("windows") >= 0;
 
