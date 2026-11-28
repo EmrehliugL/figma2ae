@@ -18,7 +18,7 @@ const PANEL_ID = "com.iug.figma2ae.panel";
 let hostOk = false, hostErr = "", project = "", lastStateWrite = 0;
 
 function evalAE(script) { return new Promise(res => { if (!window.__adobe_cep__) return res(""); window.__adobe_cep__.evalScript(script, r => res(r)); }); }
-const EXT_DIR = (() => { try { return decodeURIComponent(location.pathname).replace(/^\/([A-Za-z]:)/, "$1").replace(/\/server\.html$/, ""); } catch (e) { return ""; } })();
+const EXT_DIR = EXT_DIR0;
 async function checkHost() {
   await evalAE(`try{$.evalFile(new File(${JSON.stringify(EXT_DIR + "/host/host.jsx")}))}catch(e){}`);
   let r = await evalAE("f2aePing()");
@@ -80,6 +80,13 @@ function savePackage(buf, label) {
   } catch (e) { try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e2) {} throw e; }
 }
 
+/* Quem pode falar com o receptor: o plugin do Figma (a janela dele tem origem "null"), o painel e o
+   Figma2AE Studio (pedidos do Node, sem origem). Qualquer site aberto no navegador é recusado: sem isso,
+   uma página qualquer conseguiria jogar camadas na comp aberta ou abrir o Studio enquanto o After está ligado. */
+function originOk(o) {
+  if (o === undefined || o === "" || o === "null" || o === "file://") return true;
+  try { const u = new URL(o); return u.protocol === "https:" && (u.hostname === "figma.com" || u.hostname.endsWith(".figma.com")); } catch (e) { return false; }
+}
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -99,6 +106,7 @@ function updState() { const u = upd(); if (!u) return null; const s = u.state; r
 function sendJSON(res, code, obj) { res.writeHead(code, { "Content-Type": "application/json" }); res.end(JSON.stringify(obj)); }
 
 function handler(req, res) {
+  if (!originOk(req.headers.origin)) { res.writeHead(403, { "Content-Type": "application/json" }); return res.end('{"ok":false,"error":"origem não permitida"}'); }
   cors(res);
   if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
   if (req.url.startsWith("/update")) {
@@ -164,8 +172,8 @@ function handler(req, res) {
   }
   if (req.method === "POST" && req.url.startsWith("/build")) {
     // pedido do Figma2AE Studio: monta as tomadas de um pacote recebido
-    const chunks = [];
-    req.on("data", c => chunks.push(c));
+    const chunks = []; let size = 0;
+    req.on("data", c => { size += c.length; if (size > 64 * 1024 * 1024) req.destroy(); else chunks.push(c); });
     req.on("end", async () => {
       let out;
       try {
@@ -204,6 +212,6 @@ function listen(host) {
   setInterval(() => { const u = upd(); if (u) u.check(true); }, 6 * 3600e3);
   setInterval(() => { const u = upd(); if (u) u.applyPendingStudio(); }, 30000);
 })();
-if (typeof module !== "undefined") module.exports = { unzipTo, savePackage };
+if (typeof module !== "undefined") module.exports = { unzipTo, savePackage, originOk, handler };
 </script>
 </body></html>

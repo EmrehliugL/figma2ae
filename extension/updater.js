@@ -130,16 +130,24 @@ function create(o) {
       const vj = JSON.parse(fs.readFileSync(path.join(work, "version.json"), "utf8"));
       if (vj.version !== info.version) throw new Error("versão do pacote não bate com a anunciada");
       st.phase = "instalando";
-      // cópia de segurança da extensão atual (volta manual em caso de problema)
+      // cópia de segurança da extensão e do plugin atuais: se qualquer cópia falhar no meio
+      // (arquivo travado, disco cheio), tudo volta sozinho como estava, sem ficar metade nova e metade velha
       const bak = path.join(docsDir, "_update", "backup_" + st.current);
-      fs.rmSync(bak, { recursive: true, force: true }); copyDir(o.extDir, bak);
-      if (fs.existsSync(path.join(work, "plugin"))) {
-        // o Figma lê o plugin da pasta onde o manifesto foi importado: atualiza todas que existirem
-        const dirs = PATHS ? PATHS.pluginDirs() : [path.join(docsDir, "figma-plugin")];
-        if (!dirs.includes(path.join(docsDir, "figma-plugin")) && fs.existsSync(path.join(docsDir, "figma-plugin", "manifest.json"))) dirs.push(path.join(docsDir, "figma-plugin"));
+      fs.rmSync(bak, { recursive: true, force: true }); copyDir(o.extDir, path.join(bak, "extension"));
+      const dirs = !fs.existsSync(path.join(work, "plugin")) ? [] : (o.pluginDirs ? o.pluginDirs() : PATHS ? PATHS.pluginDirs() : [path.join(docsDir, "figma-plugin")]);
+      // o Figma lê o plugin da pasta onde o manifesto foi importado: atualiza todas que existirem
+      if (dirs.length && !dirs.includes(path.join(docsDir, "figma-plugin")) && fs.existsSync(path.join(docsDir, "figma-plugin", "manifest.json"))) dirs.push(path.join(docsDir, "figma-plugin"));
+      const saved = [];
+      dirs.forEach((d, i) => { if (fs.existsSync(d)) { const b = path.join(bak, "plugin_" + i); copyDir(d, b); saved.push([d, b]); } });
+      try {
+        if (o.beforeInstall) o.beforeInstall(); // só pros testes simularem falha
         dirs.forEach(d => copyDir(path.join(work, "plugin"), d));
+        if (fs.existsSync(path.join(work, "extension"))) copyDir(path.join(work, "extension"), o.extDir);
+      } catch (e) {
+        let back = true;
+        try { copyDir(path.join(bak, "extension"), o.extDir); saved.forEach(([d, b]) => copyDir(b, d)); } catch (e2) { back = false; }
+        throw new Error("não deu pra instalar (" + e.message + "). " + (back ? "Tudo voltou como estava." : "Volte a cópia de segurança em " + bak + "."));
       }
-      if (fs.existsSync(path.join(work, "extension"))) copyDir(path.join(work, "extension"), o.extDir);
       let studio = "sem-mudança";
       const asar = path.join(work, "studio", "app.asar.bin"); // .bin: evita que algum Node com suporte a asar trate como pasta
       if (fs.existsSync(asar)) {

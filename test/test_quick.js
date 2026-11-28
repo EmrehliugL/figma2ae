@@ -49,8 +49,9 @@ global.app = { version: "26.0", project: { activeItem: null, rootFolder: ROOT,
   importFile: o => ({ name: o.file.name, width: 400, height: 200, parentFolder: null }) },
   beginUndoGroup() {}, endUndoGroup() {}, beginSuppressDialogs() {}, endSuppressDialogs() {}, findMenuCommandId: () => 0, executeCommand() {} };
 global.ImportOptions = function (f) { this.file = f; };
-global.File = function (p) { this.fsName = p; this.exists = true; this.name = String(p).split("/").pop(); this.length = 10; this.parent = { fsName: "/pkg" };
-  this.open = () => true; this.read = () => MANIFEST; this.close = () => {}; this.copy = () => true; };
+global.File = function (p) { this.fsName = p; this.exists = !/\/Biblioteca\/.+\./.test(String(p)); this.name = String(p).split("/").pop(); this.length = 10; this.parent = { fsName: "/pkg" };
+  this.open = () => true; this.read = () => MANIFEST; this.close = () => {}; this.copy = d => { COPIES.push(String(d)); return true; }; };
+const COPIES = [];
 global.Folder = function (p) { this.fsName = p; this.exists = true; this.create = () => {}; };
 global.Folder.myDocuments = { fsName: "/docs" };
 global.Shape = function () {}; global.MarkerValue = function () {};
@@ -125,6 +126,12 @@ const { quickImport } = global.F2AE_TEST;
   q = quickImport(new File("/pkg/figma2ae.json"));
   assert.strictEqual(COMPS, 0); assert.strictEqual(c2.numLayers, 3);
   assert.ok(c2._ls.every(l => l.kind === "footage"));
+  // Biblioteca: cada arquivo guardado com a identidade do conteúdo (não só o tamanho em bytes)
+  const fh = JSON.parse(r.manifest).fileHashes;
+  assert.ok(fh && Object.keys(fh).length === 3, "pacote leva o hash de cada arquivo");
+  const libNames = COPIES.slice(-3).map(d => d.split("/").pop());
+  libNames.forEach(n => assert.ok(/^[0-9a-f]{16}_[0-9a-f]+_/.test(n), "nome na Biblioteca com hash: " + n));
+  assert.ok(Object.values(fh).every(h => libNames.some(n => n.startsWith(h + "_"))));
 
   // comp de outro tamanho: a seleção entra centralizada (mantendo a distância entre as camadas)
   page.selection = [botao, titulo];

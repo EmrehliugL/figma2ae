@@ -23,12 +23,29 @@ function realDocuments() {
 const docs = () => path.join(realDocuments(), "Figma2AE");
 const legacyDocs = () => path.join(os.homedir(), "Documents", "Figma2AE");
 
+/* Pastas de onde o Figma Desktop carrega o Figma2AE: a lista "localFileExtensions" do settings.json dele.
+   Quem importou o manifesto direto do zip (Downloads etc.) tem o plugin numa pasta fora de Documentos;
+   sem isso o Atualizar atualizava Documentos e o Figma continuava lendo a pasta velha. */
+const PLUGIN_ID = "figma2ae-iug-local";
+function figmaSettingsFile() { return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), "Figma", "settings.json"); }
+function figmaPluginDirs(file) {
+  try {
+    const d = JSON.parse(fs.readFileSync(file || figmaSettingsFile(), "utf8").replace(/^\uFEFF/, ""));
+    const out = [];
+    (Array.isArray(d.localFileExtensions) ? d.localFileExtensions : []).forEach(e => {
+      if (!e || e.lastKnownPluginId !== PLUGIN_ID || typeof e.manifestPath !== "string") return;
+      const dir = path.win32.dirname(e.manifestPath); // aceita C:\... e caminhos com "/"
+      if (fs.existsSync(path.join(dir, "manifest.json")) && out.indexOf(dir) < 0) out.push(dir);
+    });
+    return out;
+  } catch (e) { return []; }
+}
 /* Pastas do plugin do Figma que podem existir (o Figma lê de onde o manifesto foi importado). */
-function pluginDirs() {
-  const list = [path.join(docs(), "figma-plugin"), path.join(legacyDocs(), "figma-plugin")];
+function pluginDirs(settingsFile) {
+  const list = [path.join(docs(), "figma-plugin"), path.join(legacyDocs(), "figma-plugin")].concat(figmaPluginDirs(settingsFile));
   const found = list.filter((d, i) => list.indexOf(d) === i && fs.existsSync(path.join(d, "manifest.json")));
   return found.length ? found : [list[0]];
 }
 const studioExe = () => path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Programs", "Figma2AE Studio", "Figma2AE Studio.exe");
 
-module.exports = { realDocuments, docs, legacyDocs, pluginDirs, studioExe };
+module.exports = { realDocuments, docs, legacyDocs, pluginDirs, figmaPluginDirs, figmaSettingsFile, studioExe };

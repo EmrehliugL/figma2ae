@@ -7,7 +7,7 @@
  *  e ative Preferências > Scripting e Expressões > "Permitir que scripts gravem arquivos e acessem a rede".
  */
 (function F2AE(thisObj) {
-    var VERSION = "2.11.0";
+    var VERSION = "2.12.0";
     var SETTINGS = "Figma2AE";
     var IS_WIN = $.os.toLowerCase().indexOf("windows") >= 0;
 
@@ -92,7 +92,8 @@
         var tmp = new Folder(Folder.temp.fsName + "/f2ae_" + new Date().getTime());
         tmp.create();
         var src = zipFile;
-        if (!asciiOnly(zipFile.fsName)) { src = new File(tmp.fsName + "/pacote.zip"); zipFile.copy(src); }
+        // acento, % ou ! no caminho quebram o .bat (o cmd troca %…% e !…!): extrai de uma cópia com nome simples
+        if (!asciiOnly(zipFile.fsName) || /[%!^&"]/.test(zipFile.fsName)) { src = new File(tmp.fsName + "/pacote.zip"); zipFile.copy(src); }
         var out = new Folder(tmp.fsName + "/x"); out.create();
         var outTxt = "";
         if (IS_WIN) {
@@ -171,7 +172,7 @@
         if (this.footage[rel]) return this.footage[rel];
         var f = new File(this.dir.fsName + "/" + rel);
         if (!f.exists) throw new Error("Arquivo do pacote não encontrado: " + rel);
-        f = this.toLibrary(f);
+        f = this.toLibrary(f, rel);
         var item = app.project.importFile(new ImportOptions(f));
         item.parentFolder = rel.indexOf("/IMAGES/") >= 0 ? this.fImages : rel.indexOf("/VECTORS/") >= 0 ? this.fVectors : rel.indexOf("/REF/") >= 0 ? this.fRef : this.fOther;
         this.footage[rel] = item;
@@ -180,7 +181,7 @@
 
     // Copia cada arquivo para Documentos\Figma2AE\Biblioteca (sem duplicar), para que apagar
     // o histórico de pacotes recebidos não quebre projetos do After já montados.
-    Ctx.prototype.toLibrary = function (f) {
+    Ctx.prototype.toLibrary = function (f, rel) {
         if (this.opts && this.opts.library === false) return f;
         try {
             if (!this.lib) {
@@ -190,7 +191,12 @@
                 this.lib = new Folder(base.fsName + "/" + slug);
                 if (!this.lib.exists) this.lib.create();
             }
-            var name = f.length + "_" + decodeURI(f.name), dst = new File(this.lib.fsName + "/" + name);
+            // identidade = hash do conteúdo que o plugin manda (fileHashes). Antes era só o tamanho em bytes:
+            // uma forma de cor chapada rasterizada tem o MESMO tamanho em qualquer cor, então trocar a cor no
+            // Figma e mandar de novo podia trazer a cor velha da Biblioteca.
+            var hs = this.pkg && this.pkg.fileHashes && rel ? this.pkg.fileHashes[rel] : "";
+            var key = hs ? String(hs).replace(/[^A-Za-z0-9_]/g, "") : String(f.length);
+            var name = key + "_" + decodeURI(f.name), dst = new File(this.lib.fsName + "/" + name);
             if (dst.exists && dst.length === f.length) return dst;
             if (f.copy(dst.fsName)) return dst;
         } catch (e) {}
@@ -1093,7 +1099,9 @@
         try { app.beginSuppressDialogs(); } catch (e) {}
         var ctx, comps = [], master = null;
         try {
-            ctx = new Ctx({ file: plan.file }, dir, opts);
+            // hashes dos arquivos vêm do pacote original (o plano do Studio fica na mesma pasta)
+            var fh = null; try { var pj = new File(dir.fsName + "/figma2ae.json"); if (pj.exists) fh = parseJSON(readText(pj)).fileHashes || null; } catch (eH) {}
+            ctx = new Ctx({ file: plan.file, fileHashes: fh }, dir, opts);
             each(plan.shots, function (sh, i) { log("Montando " + sh.compName + " (" + (i + 1) + "/" + plan.shots.length + ")…"); comps.push(buildShotComp(sh, ctx)); });
             if (plan.master && comps.length) {
                 var total = 0; each(comps, function (c) { total += c.duration; });

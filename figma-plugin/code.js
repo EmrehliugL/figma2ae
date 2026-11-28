@@ -14,10 +14,13 @@ function fnv(str) {
   for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; }
   return ("0000000" + h.toString(16)).slice(-8);
 }
+/* identidade de um arquivo pra não repetir imagens no pacote: lê o arquivo INTEIRO com dois hashes de 32 bits
+   (antes lia só ~65 mil bytes; duas imagens diferentes do mesmo tamanho podiam virar "a mesma" e uma camada
+   aparecia com a imagem da outra) */
 function fnvBytes(bytes) {
-  var h = 0x811c9dc5, step = Math.max(1, Math.floor(bytes.length / 65536));
-  for (var i = 0; i < bytes.length; i += step) { h ^= bytes[i]; h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; }
-  return ("0000000" + h.toString(16)).slice(-8) + "_" + bytes.length.toString(16);
+  var h1 = 0x811c9dc5, h2 = 5381, n = bytes.length;
+  for (var i = 0; i < n; i++) { var b = bytes[i]; h1 = Math.imul(h1 ^ b, 16777619); h2 = (Math.imul(h2, 33) + b) | 0; }
+  return ("0000000" + (h1 >>> 0).toString(16)).slice(-8) + ("0000000" + (h2 >>> 0).toString(16)).slice(-8) + "_" + n.toString(16);
 }
 function r2(v) { return Math.round(v * 100) / 100; }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -427,16 +430,29 @@ function serialize(scenes) {
 
 /* ------------------------------------------------------------------ miniaturas */
 var thumbJob = 0;
-async function sendThumbs(ids) {
+var THUMB_SENT = {};       // miniaturas que a janela já tem (não exporta de novo a cada clique)
+var THUMB_WATCH = false;   // só reaproveita se der pra saber quando o frame muda
+function thumbsDirty(ev) {
+  // algo mudou na página: só as miniaturas dos frames afetados são refeitas no próximo clique
+  try {
+    (ev && ev.nodeChanges || []).forEach(function (ch) {
+      if (ch.type === "DELETE" || !ch.node || ch.node.removed) { THUMB_SENT = {}; return; }
+      for (var n = ch.node; n && n.type !== "PAGE"; n = n.parent) if (THUMB_SENT[n.id]) delete THUMB_SENT[n.id];
+    });
+  } catch (e) { THUMB_SENT = {}; }
+}
+async function sendThumbs(ids, force) {
   var job = ++thumbJob;
   for (var i = 0; i < ids.length; i++) {
     if (job !== thumbJob) return;
+    if (!force && THUMB_WATCH && THUMB_SENT[ids[i]]) continue;
     try {
       var n = await figma.getNodeByIdAsync(ids[i]);
       if (!n || !("exportAsync" in n)) continue;
       var longSide = Math.max(n.width, n.height) || 1;
       var bytes = await n.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: Math.min(2, 96 / longSide) } });
       post({ type: "thumb", nodeId: ids[i], bytes: bytes });
+      THUMB_SENT[ids[i]] = true;
     } catch (e) {}
   }
 }
@@ -481,6 +497,7 @@ function Exporter(opts) {
   this.names = {};
   this.warnings = [];
   this.count = 0;
+  this.imgCache = {};       // imageHash → arquivo já no pacote
 }
 function imageExt(bytes) {
   if (bytes[0] === 0xFF && bytes[1] === 0xD8) return ".jpg";
@@ -499,6 +516,8 @@ Exporter.prototype.addFile = function (folder, base, bytes) {
   this.byHash[h] = "assets/" + p;
   return "assets/" + p;
 };
+/* caminho no pacote → identidade do conteúdo (o After usa pra guardar na Biblioteca sem confundir arquivos) */
+Exporter.prototype.fileHashes = function () { var o = {}; for (var h in this.byHash) o[this.byHash[h]] = h; return o; };
 Exporter.prototype.raster = async function (node, containerAbs, base, folder, reason) {
   var rb = node.absoluteRenderBounds || node.absoluteBoundingBox;
   // resolução: a escolhida, mas sem passar de 4096 px no lado maior (fundos de 1920 em 4x viravam 7680 px)
@@ -712,9 +731,14 @@ Exporter.prototype.paintStack = async function (node, base, containerAbs, vf, vs
     } else if (p.type === "IMAGE") {
       pa.type = "image";
       try {
-        var img = figma.getImageByHash(p.imageHash);
-        var bytes = await img.getBytesAsync(), sz = await img.getSizeAsync();
-        pa.file = this.addFile("IMAGES", node.name + " textura", bytes); pa.iw = sz.width; pa.ih = sz.height;
+        // a mesma foto costuma se repetir em vários frames da cena: baixa e confere só uma vez por exportação
+        var got = this.imgCache[p.imageHash];
+        if (!got) {
+          var img = figma.getImageByHash(p.imageHash);
+          var bytes = await img.getBytesAsync(), sz = await img.getSizeAsync();
+          got = this.imgCache[p.imageHash] = { file: this.addFile("IMAGES", node.name + " textura", bytes), w: sz.width, h: sz.height };
+        }
+        pa.file = got.file; pa.iw = got.w; pa.ih = got.h;
       } catch (e) { var rr = await this.paintRaster(node, p, node.name + " imagem"); pa.file = rr.file; pa.mode = "RASTER"; pa.scale = rr.scale; }
       pa.mode = pa.mode || p.scaleMode || "FILL";
       pa.scalingFactor = p.scalingFactor || 1;
@@ -1165,8 +1189,8 @@ async function exportFrames(req) {
     if (opts.reference !== false && t.frame) {
       var longSide = Math.max(t.frame.width, t.frame.height) || 1, sc = Math.min(1, 4096 / longSide);
       var bytes = await t.frame.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: sc } });
-      ex.files.push({ path: "assets/REF/" + safeName(d.compName) + ".png", bytes: bytes });
-      out.ref = { file: "assets/REF/" + safeName(d.compName) + ".png", scale: sc };
+      // nome único (antes, dois comps com nomes longos que começavam iguais dividiam a mesma guia)
+      out.ref = { file: ex.addFile("REF", d.compName, bytes), scale: sc };
     }
     pkg.comps.push(out);
   }
@@ -1174,6 +1198,7 @@ async function exportFrames(req) {
   var seqs = {}, order = [];
   desc.forEach(function (d, i) { if (!d.seq) return; if (!seqs[d.seq]) { seqs[d.seq] = { name: d.group || cleanCompName(d.containerName), keys: [], comps: [] }; order.push(d.seq); } seqs[d.seq].keys.push(d.key); seqs[d.seq].comps.push(i); });
   if (order.length) pkg.sequences = order.map(function (k) { return seqs[k]; });
+  pkg.fileHashes = ex.fileHashes();
   return { manifest: JSON.stringify(pkg), files: ex.files, count: ex.count, comps: desc.length };
 }
 
@@ -1230,6 +1255,7 @@ async function quickExport(req) {
     pkg.layers.push({ spec: spec, abs: true, bounds: { x: r2(bx.x), y: r2(bx.y), w: r2(bx.width), h: r2(bx.height) }, refs: refs,
       frameW: refs.length ? refs[0].w : 0, frameH: refs.length ? refs[0].h : 0, frame: top ? top.name : "" });
   }
+  pkg.fileHashes = ex.fileHashes();
   return { manifest: JSON.stringify(pkg), files: ex.files, count: nodes.length };
 }
 
@@ -1350,7 +1376,14 @@ if (typeof figma !== "undefined" && !(typeof globalThis !== "undefined" && globa
   if (!QUICK_START) figma.clientStorage.getAsync("f2ae_size").then(function (sz) { if (sz && sz.w && sz.h) figma.ui.resize(sz.w, sz.h); }).catch(function () {});
   figma.ui.onmessage = handle;
   figma.on("selectionchange", sendSelection);
-  figma.on("currentpagechange", function () { SCENE_CACHE = null; sendSelection(); });
+  var watched = {};
+  var watchPage = function () {
+    var pg = figma.currentPage;
+    if (watched[pg.id]) return;
+    try { pg.on("nodechange", thumbsDirty); watched[pg.id] = true; THUMB_WATCH = true; } catch (e) { THUMB_WATCH = false; }
+  };
+  watchPage();
+  figma.on("currentpagechange", function () { SCENE_CACHE = null; watchPage(); sendSelection(); });
   sendSelection();
 }
 
@@ -1358,5 +1391,6 @@ if (typeof module !== "undefined") module.exports = {
   fnv: fnv, mul: mul, inv: inv, apply: apply, decompose: decompose, relXf: relXf, m2o: m2o,
   detectScenes: detectScenes, extractElements: extractElements, scorePair: scorePair, assign: assign,
   linkScene: linkScene, diffStates: diffStates, analyze: analyze, exportFrames: exportFrames, resolveTargets: resolveTargets, describeTargets: describeTargets, Exporter: Exporter,
-  compNameFor: compNameFor, handle: handle, quickExport: quickExport, quickTargets: quickTargets, _last: function () { return LAST; }
+  compNameFor: compNameFor, handle: handle, quickExport: quickExport, quickTargets: quickTargets, _last: function () { return LAST; },
+  sendThumbs: sendThumbs, thumbsDirty: thumbsDirty, _thumbWatch: function (v) { THUMB_WATCH = v; }
 };

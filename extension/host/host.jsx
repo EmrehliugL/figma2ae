@@ -14,7 +14,13 @@ function f2aeLoad(extDir) {
 }
 try { if (!F2AE_HOST.importPackage) f2aeLoad(); } catch (e) {}
 
-function f2aeEsc(s) { return String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, "\\n"); }
+// escapa TUDO que quebraria o JSON (tab, \r, caracteres de controle colados no nome de uma camada…):
+// antes só a quebra de linha, e um tab no nome fazia o plugin dizer "o After não respondeu" mesmo com a importação certa
+function f2aeEsc(s) {
+    return String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\u0000-\u001f\u2028\u2029]/g, function (c) {
+        var h = c.charCodeAt(0).toString(16); return "\\u" + ("0000" + h).slice(-4);
+    });
+}
 function f2aeArr(a) { var o = []; for (var i = 0; i < a.length; i++) o.push('"' + f2aeEsc(a[i]) + '"'); return "[" + o.join(",") + "]"; }
 
 function f2aePing() {

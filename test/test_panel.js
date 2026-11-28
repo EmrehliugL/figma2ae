@@ -35,6 +35,15 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await sleep(400);
   const pre = await req("OPTIONS", "/package", null, { "Access-Control-Request-Private-Network": "true" });
   assert.strictEqual(pre.status, 204); assert.strictEqual(pre.headers["access-control-allow-private-network"], "true");
+  // só o plugin do Figma (origem "null"), o painel e o Studio (sem origem) entram; sites, não
+  for (const o of ["https://site-qualquer.com", "http://localhost:3000", "https://figma.com.golpe.io"]) {
+    const bad = await req("POST", "/quick", Buffer.from("x"), { Origin: o, "Content-Type": "text/plain" });
+    assert.strictEqual(bad.status, 403, "recusa " + o);
+    assert.strictEqual(bad.headers["access-control-allow-origin"], undefined);
+    assert.strictEqual((await req("OPTIONS", "/package", null, { Origin: o })).status, 403);
+    assert.strictEqual((await req("GET", "/ping", null, { Origin: o })).status, 403, "não revela o projeto aberto pra sites");
+  }
+  for (const o of ["null", "https://www.figma.com", "file://"]) assert.strictEqual((await req("GET", "/ping", null, { Origin: o })).status, 200, "aceita " + o);
   const ping = JSON.parse((await req("GET", "/ping")).body);
   assert.strictEqual(ping.app, "Figma2AE"); assert.strictEqual(ping.ok, true, "script do AE carregado");
   // 2) Figma envia com o painel FECHADO → guarda e pede pra abrir o painel
