@@ -4,7 +4,7 @@ Leva as telas do storyboard no Figma para o After Effects como camadas nativas e
 
 ## Baixar
 
-**[⬇ Baixar o instalador](https://github.com/EmrehliugL/figma2ae/releases/latest)**: baixe o **`Figma2AE_Setup_v<versão>.exe`** e dê dois cliques. Ele instala tudo de uma vez (plugin do Figma, extensão do After Effects e Figma2AE Studio), sem pedir administrador. No fim, falta só importar o plugin no Figma: *Plugins › Development › Import plugin from manifest…* e colar o caminho (o instalador já deixa copiado).
+**[⬇ Baixar o instalador](https://github.com/EmrehliugL/figma2ae/releases/latest)**: baixe o **`Figma2AE_Setup_v<versão>.exe`** e dê dois cliques. Ele instala tudo de uma vez (plugin do Figma, extensão do After Effects e Figma2AE Studio), sem pedir administrador. Com o Figma fechado durante a instalação, o plugin já aparece sozinho em *Plugins › Development › Figma2AE*. Se o Figma estiver aberto (ou nunca tiver sido aberto no PC), é só importar uma vez: *Plugins › Development › Import plugin from manifest…* e colar o caminho (o instalador já deixa copiado).
 
 Prefere sem .exe? Baixe o `Figma2AE_v<versão>.zip`, extraia e dê dois cliques em `INSTALAR.bat`.
 

@@ -17,6 +17,7 @@ def main(version, studio_dir):
     shutil.copytree(studio_dir, os.path.join(stage, "studio"))
     shutil.copytree(os.path.join(ROOT, "installer", "Tutorial"), os.path.join(stage, "tutorial"))
     shutil.copy(os.path.join(ROOT, "studio", "app", "icon.ico"), os.path.join(stage, "icon.ico"))
+    shutil.copy(os.path.join(ROOT, "installer", "registrar_figma.js"), os.path.join(stage, "registrar_figma.js"))
     exe = os.path.join(out, f"Figma2AE_Setup_v{version}.exe")
     subprocess.run(["makensis", "-V2", f"-DVERSION={version}", f"-DSRC={stage}", f"-DOUTFILE={exe}",
                     os.path.join(ROOT, "installer", "setup.nsi")], check=True)

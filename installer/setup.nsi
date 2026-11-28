@@ -14,6 +14,10 @@ ManifestDPIAware true
 !define EXT_DIR "$APPDATA\Adobe\CEP\extensions\com.iug.figma2ae"
 !define DOCS_DIR "$DOCUMENTS\Figma2AE"
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Figma2AE"
+!define FIGMA_SETTINGS "$APPDATA\Figma\settings.json"
+
+Var FigmaAberto   ; 1 = a pessoa preferiu deixar o Figma aberto (aí o plugin é importado à mão)
+Var FimTexto
 
 Name "${APPNAME} ${VERSION}"
 OutFile "${OUTFILE}"
@@ -44,7 +48,7 @@ VIAddVersionKey /LANG=1046 "LegalCopyright" "Iug"
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_TITLE "Pronto! Figma2AE instalado"
-!define MUI_FINISHPAGE_TEXT "Falta só um passo, uma única vez, no Figma de desktop:$\r$\n$\r$\nPlugins  ›  Development  ›  Import plugin from manifest…$\r$\n$\r$\nNa janela que abrir, cole o caminho (Ctrl+V, ele já está copiado) e confirme:$\r$\n${DOCS_DIR}\figma-plugin\manifest.json$\r$\n$\r$\nNo After Effects: Janela › Extensões › Figma2AE."
+!define MUI_FINISHPAGE_TEXT "$FimTexto"
 !define MUI_FINISHPAGE_RUN "${STUDIO_DIR}\Figma2AE Studio.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Abrir o Figma2AE Studio"
 !define MUI_FINISHPAGE_SHOWREADME
@@ -81,6 +85,51 @@ Function Fechados
   ${If} $1 != ""
     MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Feche o $1 antes de continuar (salve o seu projeto primeiro).$\r$\n$\r$\nDepois clique em Repetir." IDRETRY checar
     Abort
+  ${EndIf}
+  ; o Figma regrava as configurações dele ao fechar: aberto, não dá pra registrar o plugin sozinho
+  StrCpy $FigmaAberto 0
+  figma:
+  nsExec::ExecToStack 'cmd /c tasklist /fi "imagename eq Figma.exe" /nh | find /i "Figma.exe"'
+  Pop $0
+  Pop $2
+  ${If} $0 == 0
+    MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION "O Figma está aberto.$\r$\n$\r$\nFeche o Figma e clique em Repetir: assim o instalador já coloca o plugin dentro dele sozinho.$\r$\n$\r$\nIgnorar = continuar com o Figma aberto (aí você importa o plugin à mão no final)." IDRETRY figma IDIGNORE figma_ignora
+    Abort
+    figma_ignora:
+    StrCpy $FigmaAberto 1
+  ${EndIf}
+FunctionEnd
+
+Function TextoManual
+  StrCpy $FimTexto "Falta só um passo, uma única vez, no Figma de desktop:$\r$\n$\r$\nPlugins  ›  Development  ›  Import plugin from manifest…$\r$\n$\r$\nNa janela que abrir, cole o caminho (Ctrl+V, ele já está copiado) e confirme:$\r$\n${DOCS_DIR}\figma-plugin\manifest.json$\r$\n$\r$\nNo After Effects: Janela › Extensões › Figma2AE."
+FunctionEnd
+
+; coloca o plugin na lista do Figma (sem o "Import plugin from manifest…"), usando o Electron do Studio como node
+Function RegistrarFigma
+  Call TextoManual
+  ${If} $FigmaAberto == 1
+    DetailPrint "Figma aberto: o plugin vai ser importado à mão."
+    Return
+  ${EndIf}
+  ${IfNot} ${FileExists} "${STUDIO_DIR}\Figma2AE Studio.exe"
+    Return
+  ${EndIf}
+  InitPluginsDir
+  SetOutPath "$PLUGINSDIR"
+  File "${SRC}\registrar_figma.js"
+  System::Call 'Kernel32::SetEnvironmentVariable(t "ELECTRON_RUN_AS_NODE", t "1")'
+  nsExec::ExecToStack '"${STUDIO_DIR}\Figma2AE Studio.exe" "$PLUGINSDIR\registrar_figma.js" add "${FIGMA_SETTINGS}" "${DOCS_DIR}\figma-plugin"'
+  Pop $0
+  Pop $2
+  System::Call 'Kernel32::SetEnvironmentVariable(t "ELECTRON_RUN_AS_NODE", p 0)'
+  ${If} $0 == 0
+  ${OrIf} $0 == 2
+    DetailPrint "Plugin colocado no Figma."
+    StrCpy $FimTexto "Tudo instalado, inclusive dentro do Figma.$\r$\n$\r$\nNo Figma de desktop (abra um arquivo):$\r$\nPlugins  ›  Development  ›  Figma2AE$\r$\n(ou Quick Import, no mesmo menu)$\r$\n$\r$\nNo After Effects: Janela › Extensões › Figma2AE.$\r$\n$\r$\nSe o plugin não aparecer no Figma, importe uma vez à mão: Plugins › Development › Import plugin from manifest… e cole (Ctrl+V) o caminho que já está copiado."
+  ${ElseIf} $0 == 3
+    DetailPrint "O Figma ainda não foi aberto neste PC: o plugin vai ser importado à mão."
+  ${Else}
+    DetailPrint "Não deu pra colocar o plugin no Figma sozinho (código $0): importe à mão."
   ${EndIf}
 FunctionEnd
 
@@ -137,6 +186,7 @@ Section "-registrar"
   ${IfNot} ${FileExists} "${STUDIO_DIR}\icon.ico"
     File "${SRC}\icon.ico"
   ${EndIf}
+  File "${SRC}\registrar_figma.js"
   WriteUninstaller "${STUDIO_DIR}\Desinstalar Figma2AE.exe"
   CreateDirectory "$SMPROGRAMS\Figma2AE"
   CreateShortcut "$SMPROGRAMS\Figma2AE\Desinstalar Figma2AE.lnk" "${STUDIO_DIR}\Desinstalar Figma2AE.exe"
@@ -147,6 +197,7 @@ Section "-registrar"
   WriteRegStr HKCU "${UNINST_KEY}" "UninstallString" '"${STUDIO_DIR}\Desinstalar Figma2AE.exe"'
   WriteRegDWORD HKCU "${UNINST_KEY}" "NoModify" 1
   WriteRegDWORD HKCU "${UNINST_KEY}" "NoRepair" 1
+  Call RegistrarFigma
   FileOpen $0 "${DOCS_DIR}\instalacao.log" w
   FileWrite $0 "Figma2AE ${VERSION} instalado pelo Figma2AE_Setup.exe$\r$\n"
   FileClose $0
@@ -160,6 +211,18 @@ SectionEnd
 
 ; ------------------------------------------------------------------ desinstalar
 Section "Uninstall"
+  ; tira o plugin da lista do Figma (só se o Figma estiver fechado; aberto, ele regravaria a lista)
+  nsExec::ExecToStack 'cmd /c tasklist /fi "imagename eq Figma.exe" /nh | find /i "Figma.exe"'
+  Pop $0
+  Pop $2
+  ${If} $0 != 0
+  ${AndIf} ${FileExists} "${STUDIO_DIR}\Figma2AE Studio.exe"
+  ${AndIf} ${FileExists} "${STUDIO_DIR}\registrar_figma.js"
+    System::Call 'Kernel32::SetEnvironmentVariable(t "ELECTRON_RUN_AS_NODE", t "1")'
+    nsExec::ExecToStack '"${STUDIO_DIR}\Figma2AE Studio.exe" "${STUDIO_DIR}\registrar_figma.js" remove "${FIGMA_SETTINGS}"'
+    Pop $0
+    Pop $2
+  ${EndIf}
   RMDir /r "${EXT_DIR}"
   Delete "$DESKTOP\Figma2AE Studio.lnk"
   RMDir /r "$SMPROGRAMS\Figma2AE"
