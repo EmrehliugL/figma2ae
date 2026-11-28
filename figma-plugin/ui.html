@@ -4,117 +4,130 @@
 <meta charset="utf-8">
 <style>
 :root{
-  --bg:#1b1b1b; --panel:#232323; --panel2:#2b2b2b; --panel3:#313131; --line:#3a3a3a; --line2:#2a2a2a;
-  --text:#d8d8d8; --muted:#9a9a9a; --faint:#6b6b6b; --beige:#2d8ceb; --beige2:#5aa9f5;
-  --new:#8ccf9e; --mod:#e7c86b; --blue:#8fa4d8;
+  --bg:#1e1e1e; --s1:#252525; --s2:#2c2c2c; --s3:#333; --bd:#343434; --bd2:#2a2a2a;
+  --text:#e2e2e2; --muted:#a3a3a3; --faint:#707070;
+  --accent:#2d8ceb; --accent2:#5aa9f5; --ok:#6fcf8e; --warn:#e7c86b; --err:#e0795e;
+  /* nomes antigos (ainda usados em alguns lugares) */
+  --panel:var(--s1); --panel2:var(--s2); --panel3:var(--s3); --line:var(--bd); --line2:var(--bd2);
+  --beige:var(--accent); --beige2:var(--accent2); --new:var(--ok); --mod:var(--warn);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:12.5px/1.45 Inter,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
-button,select{font:inherit;cursor:pointer}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:12px/1.45 Inter,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,select{font:inherit;cursor:pointer;color:inherit}
 button:disabled{opacity:.45;cursor:default}
-::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#454545;border-radius:4px;border:2px solid var(--bg)}
+[hidden]{display:none!important}
+::selection{background:#2d8ceb55}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#404040;border-radius:4px;border:2px solid var(--bg)}::-webkit-scrollbar-thumb:hover{background:#4c4c4c}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:1px}
 .app{display:flex;flex-direction:column;height:100%}
 .app > *{flex:none}.app > .main{flex:1;min-height:0}
-.top{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line2)}
-.brand{font-weight:700;color:var(--beige);display:flex;align-items:center;gap:8px}
-.logo{width:16px;height:16px;border-radius:4px;background:linear-gradient(135deg,#2d8ceb,#5b5bd6)}
-.status{color:var(--muted);margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62%;font-size:11.5px}
-.main{overflow:auto;padding:12px 14px}
-.empty{color:var(--muted);padding:36px 10px;line-height:1.75;text-align:center}
-.empty b{color:var(--beige2);font-weight:600}
-.rules{margin:18px auto 0;max-width:380px;text-align:left;background:var(--panel);border-radius:4px;padding:12px 14px;color:var(--muted);font-size:12px}
-.rules div{display:flex;gap:9px;margin:5px 0}
-.rules i{font-style:normal;color:var(--beige2);min-width:14px}
-.head{display:flex;align-items:baseline;gap:8px;margin:2px 2px 10px}
-.head b{color:var(--beige);font-size:13px}
-.head span{color:var(--faint);font-size:11.5px}
-.grp{color:var(--faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;margin:12px 4px 6px;font-weight:600}
+
+/* ---- topo ---- */
+.top{display:flex;align-items:center;gap:8px;height:44px;padding:0 10px 0 12px;border-bottom:1px solid var(--bd2)}
+.brand{font-weight:700;font-size:12.5px;color:var(--text);display:flex;align-items:center;gap:7px;min-width:0}
+.logo{width:16px;height:16px;flex:none}
+.vchip{font-size:10px;font-weight:600;color:var(--faint);background:var(--s2);border-radius:99px;padding:1px 7px;letter-spacing:.2px}
+.top .sp{flex:1}
+.qbtn{display:inline-flex;align-items:center;gap:5px;height:26px;border:1px solid var(--bd);background:var(--s1);color:var(--muted);border-radius:99px;padding:0 10px 0 8px;font-size:11px;font-weight:600;white-space:nowrap;flex:none;transition:background-color .12s,border-color .12s,color .12s}
+.qbtn svg{width:11px;height:11px;color:var(--accent2)}
+.qbtn:hover{background:var(--s2);border-color:#454545;color:var(--text)}
+.aepill{display:flex;align-items:center;gap:6px;height:26px;border:1px solid var(--bd);background:var(--s1);border-radius:99px;padding:0 10px;color:var(--muted);font-size:11px;white-space:nowrap;flex:none}
+.aedot{width:7px;height:7px;border-radius:50%;background:#5a5a5a;flex:none}
+.aedot.on{background:var(--ok);animation:aepulse 2.4s ease-out infinite}
+@keyframes aepulse{0%{box-shadow:0 0 0 0 #6fcf8e66}70%{box-shadow:0 0 0 5px #6fcf8e00}100%{box-shadow:0 0 0 0 #6fcf8e00}}
+
+/* ---- faixa de atualização ---- */
+.upd{display:flex;align-items:center;gap:10px;margin:8px 10px 0;padding:8px 8px 8px 12px;background:#1d3044;border:1px solid #2d8ceb55;border-radius:8px;font-size:11.5px;animation:fadein .2s ease-out}
+.upd .t{flex:1;min-width:0}.upd .t b{color:#fff;font-weight:600}.upd .t small{display:block;color:#a9c7e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upd button{background:var(--accent);border:0;color:#fff;border-radius:6px;height:26px;padding:0 12px;font-weight:600;font-size:11.5px;flex:none}
+.upd button:hover:not(:disabled){background:#4aa2f2}
+.upd.ok{background:#1d3427;border-color:#5ec07a55}.upd.ok .t small{color:#a9d8b7}.upd.ok button{background:#2f9e5b}
+.upd.err{background:#3a2622;border-color:#e0795e55}.upd.err .t small{color:#e6b3a6}.upd.err button{background:#b5503c}
+
+/* ---- lista ---- */
+.main{overflow:auto;padding:10px}
+.head{display:flex;align-items:baseline;gap:6px;margin:2px 2px 8px}
+.head b{font-size:12.5px;font-weight:600;color:var(--text)}
+.head span{color:var(--faint);font-size:11px}
 .grph{display:flex;align-items:center;gap:8px;margin:12px 2px 6px}
-.grph label{display:flex;align-items:center;gap:7px;color:var(--faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;cursor:pointer;min-width:0;flex:1}
+.grph:first-of-type{margin-top:4px}
+.grph label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;cursor:pointer;min-width:0;flex:1}
 .grph label span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mini{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:4px;padding:2px 8px;font-size:10.5px;white-space:nowrap}
-.mini:hover{color:var(--text);background:var(--panel2)}
-.mini.on{border-color:var(--beige2);color:var(--beige)}
-.row.off{opacity:.42}
+.grph label:hover{color:var(--text)}
+.mini{height:22px;border:1px solid var(--bd);background:transparent;color:var(--muted);border-radius:99px;padding:0 10px;font-size:10.5px;white-space:nowrap;flex:none;transition:background-color .12s,border-color .12s,color .12s}
+.mini:hover{color:var(--text);background:var(--s2)}
+.mini.on{border-color:#2d8ceb88;color:#cfe4fb;background:#2d8ceb1f}
+.row{display:grid;grid-template-columns:15px 60px 1fr auto;gap:10px;align-items:center;background:var(--s1);border:1px solid transparent;border-radius:8px;padding:7px 10px 7px 9px;margin-bottom:5px;transition:background-color .12s,border-color .12s,opacity .12s}
+.row:hover{background:#2a2a2a;border-color:var(--bd)}
+.row.off{opacity:.45}
 .row .ck{display:flex;align-items:center}
-.th{cursor:zoom-in}
-.row{display:grid;grid-template-columns:16px 64px 1fr auto;gap:12px;align-items:center;background:var(--panel);border-radius:4px;padding:8px 10px;margin-bottom:6px}
-.th{width:64px;height:40px;border-radius:4px;background:var(--panel3) center/contain no-repeat;border:1px solid var(--line2)}
+.th{width:60px;height:36px;border-radius:5px;background:var(--s3) center/contain no-repeat;border:1px solid var(--bd2);cursor:zoom-in;transition:border-color .12s,box-shadow .12s}
+.th:hover{border-color:var(--accent2);box-shadow:0 0 0 2px #2d8ceb33}
 .nm{min-width:0}
 .nm b{display:block;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
-.nm small{display:block;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tag{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
-.tag.frame{color:var(--new);background:#8ccf9e1a}
-.tag.objetos{color:var(--mod);background:#e7c86b1a}
-.opts{border-top:1px solid var(--line2);padding:10px 14px 12px}
-.optgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:10px}
-.opts label{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
-.opts select{background:var(--panel2);border:0;border-radius:4px;padding:3px 6px;color:var(--text)}
-input[type=checkbox]{accent-color:var(--beige2);width:14px;height:14px;margin:0;cursor:pointer}
-.go{display:flex;gap:10px;align-items:center}
-.btn{border:1px solid var(--line);background:transparent;padding:8px 14px;border-radius:4px;color:var(--text);white-space:nowrap}
-.btn:hover{background:var(--panel2)}
-.btn.primary{background:var(--beige);border-color:var(--beige);color:#ffffff;font-weight:700;flex:1;padding:10px 14px}
-.btn.primary:hover{background:#4a9ff0}
+.nm small{display:block;color:var(--faint);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;color:var(--muted);background:var(--s3)}
+.tag.frame{color:#9fd9b1;background:#6fcf8e17}
+.tag.objetos{color:#ecd58f;background:#e7c86b17}
+
+/* ---- tela vazia ---- */
+.empty{padding:14px 4px 6px;text-align:center;color:var(--muted)}
+.empty .ico{width:34px;height:34px;margin:0 auto 8px;border-radius:10px;background:var(--s1);border:1px solid var(--bd);display:grid;place-items:center;color:var(--accent2)}
+.empty .ico svg{width:18px;height:18px}
+.empty h4{margin:0;color:var(--text);font-size:13px;font-weight:600}
+.empty p{margin:3px 0 0;font-size:11.5px}
+.rules{margin:12px auto 0;max-width:380px;display:grid;gap:5px;text-align:left}
+.rules div{display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--bd2);border-radius:8px;padding:6px 10px;font-size:11.5px;line-height:1.35;color:var(--muted)}
+.rules i{font-style:normal;flex:none;width:22px;height:22px;border-radius:6px;background:#2d8ceb17;color:var(--accent2);display:grid;place-items:center;font-size:12px}
+.rules b{color:var(--text);font-weight:600}
+
+/* ---- opções e envio ---- */
+.opts{border-top:1px solid var(--bd2);background:#1b1b1b;padding:8px 10px 10px}
+.ohead{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:4px 2px;color:var(--muted);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;text-align:left}
+.ohead:hover{color:var(--text)}
+.ohead .sum{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500;color:var(--faint);font-size:11px}
+.ohead svg{width:10px;height:10px;transition:transform .15s;flex:none}
+.opts.closed .ohead svg{transform:rotate(-90deg)}
+.opts.closed .optgrid{display:none}
+.optgrid{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin:4px 0 2px}
+.opts label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11.5px;padding:4px 2px;border-radius:5px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.opts label:hover{color:var(--text)}
+.opts select{margin-left:auto;background:var(--s2);border:1px solid var(--bd);border-radius:5px;padding:1px 4px;color:var(--text);font-size:11.5px}
+.go{display:flex;gap:6px;align-items:center;margin-top:8px}
+.btn{height:32px;border:1px solid var(--bd);background:var(--s1);padding:0 12px;border-radius:7px;color:var(--text);white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background-color .12s,border-color .12s,box-shadow .12s,transform .08s}
+.btn svg{width:13px;height:13px}
+.btn:hover:not(:disabled){background:var(--s2);border-color:#454545}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.primary{flex:1;height:34px;background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:0 1px 0 #ffffff1f inset}
+.btn.primary:hover:not(:disabled){background:#4aa2f2;border-color:#4aa2f2}
+.btn.primary:disabled{background:#2a3642;border-color:#2a3642;color:#8796a5;opacity:1;box-shadow:none}
+.foot{display:flex;align-items:center;gap:6px;margin-top:7px;min-height:16px;font-size:11px;color:var(--faint)}
+.foot:has(#status:empty){display:none}
+.foot #status{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hint{color:var(--faint);font-size:11px}
-.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--faint);border-top-color:var(--beige);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+#aehint.warn{color:#e0b36b}
+.spin{display:inline-block;width:10px;height:10px;border:2px solid #4a4a4a;border-top-color:var(--accent2);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px;margin-right:2px}
 @keyframes sp{to{transform:rotate(360deg)}}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:10}
-.modal > div{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px;width:min(470px,92%);max-height:84%;overflow:auto}
-.modal h3{margin:0 0 8px;color:var(--beige)}
-.modal ul{padding-left:18px;color:var(--muted);margin:6px 0;font-size:11.5px}
-.aepill{display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:99px;padding:3px 9px;color:var(--muted);font-size:11px;white-space:nowrap;flex:none}
-.aedot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
-.aedot.on{background:var(--new);box-shadow:0 0 0 3px #8ccf9e22}
-.status{margin-left:auto}
-.rz{position:fixed;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;z-index:99;touch-action:none;background:linear-gradient(135deg,transparent 0 55%,#5a5a5a 55% 62%,transparent 62% 72%,#5a5a5a 72% 79%,transparent 79% 89%,#5a5a5a 89%)}
-body.resizing,body.resizing *{user-select:none!important;cursor:nwse-resize!important}
 
-/* ===== tema After Effects ===== */
-html,body{font-family:"Segoe UI",system-ui,sans-serif}
-::selection{background:#2d8ceb55}
-.upd{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#1d3550;border-bottom:1px solid #2d8ceb66;font-size:12px}
-.upd .t{flex:1;min-width:0}.upd .t b{color:#fff}.upd .t small{display:block;color:#a9c7e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.upd button{background:#2d8ceb;border:0;color:#fff;border-radius:4px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:12px}
-.upd button:disabled{opacity:.6;cursor:default}.upd.ok{background:#1f3b2a;border-color:#5ec07a66}.upd.err{background:#3a2622;border-color:#e0795e66}
-.ver{font-size:10.5px;color:var(--faint);margin-left:6px}
-input[type=checkbox],input[type=radio],input[type=range]{accent-color:#2d8ceb}
-input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:1px solid #2d8ceb;outline-offset:0}
-::-webkit-scrollbar-thumb{background:#454545!important;border-color:transparent!important;border-radius:2px!important}
-/* abas e botões no estilo dos painéis do AE */
-nav button.on,.seg button.on,.tabs button.on,.tab.on{background:#3a3a3a!important;color:#ffffff!important;box-shadow:inset 0 -2px 0 #2d8ceb}
-.btn.primary,button.primary{color:#ffffff!important}
-.btn.primary:hover:not(:disabled),button.primary:hover:not(:disabled){background:#4a9ff0!important;border-color:#4a9ff0!important}
-input[type=text],input[type=number],input[type=search],input[type=date],select,textarea{background-color:#1e1e1e;border-color:#3a3a3a}
-.logo{background:none!important;border-radius:0!important}.logo:after{display:none!important}
-
-/* ===== refinamento visual (2.3.2): mais resposta ao mouse, sem exagero ===== */
-.vchip{margin-left:6px;font-size:10px;font-weight:600;color:#9fbfe2;background:#2d8ceb1f;border:1px solid #2d8ceb40;border-radius:99px;padding:1px 7px;letter-spacing:.2px}
-.top{background:linear-gradient(180deg,#202020,#1b1b1b)}
-.btn,.mini,.row,.th,.aepill,.upd button,select{transition:background-color .14s,border-color .14s,color .14s,box-shadow .14s,transform .08s,opacity .14s}
-.btn:active:not(:disabled),.mini:active,.upd button:active{transform:translateY(1px)}
-.btn:focus-visible,.mini:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #5aa9f5;outline-offset:1px}
-.btn.primary{background:linear-gradient(180deg,#3796ee,#2a84de);box-shadow:0 1px 0 #ffffff1f inset,0 2px 8px #2d8ceb33;letter-spacing:.2px}
-.btn.primary:hover:not(:disabled){background:linear-gradient(180deg,#4aa2f2,#3390e6);box-shadow:0 1px 0 #ffffff26 inset,0 3px 12px #2d8ceb4d}
-.btn.primary:disabled{background:#2e3b48;border-color:#2e3b48;box-shadow:none;color:#8a99a8!important}
-.row{border:1px solid transparent;border-left:3px solid #2d8ceb}
-.row:hover{background:#292929;border-color:#353535;border-left-color:#5aa9f5}
-.row.off{border-left-color:transparent}
-.th:hover{border-color:#5aa9f5;box-shadow:0 0 0 2px #2d8ceb33}
-.tag{border:1px solid currentColor;border-color:color-mix(in srgb,currentColor 30%,transparent)}
-.mini{border-radius:99px;padding:3px 10px}
-.mini.on{background:#2d8ceb1f}
-.grph label span{color:#8d8d8d}
-.aepill{border:1px solid var(--line2)}
-.aedot.on{animation:aepulse 2.2s ease-out infinite}
-@keyframes aepulse{0%{box-shadow:0 0 0 0 #8ccf9e66}70%{box-shadow:0 0 0 6px #8ccf9e00}100%{box-shadow:0 0 0 0 #8ccf9e00}}
-.opts{background:#1e1e1e}
-.opts label{cursor:pointer}.opts label:hover{color:var(--text)}
-.modal{animation:fadein .16s ease-out}.modal > div{animation:popin .18s ease-out;box-shadow:0 18px 50px #000a}
-.upd{animation:fadein .2s ease-out}
+/* ---- janelas ---- */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:10;padding:14px;animation:fadein .16s ease-out}
+.modal > div{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px;width:min(440px,100%);max-height:100%;overflow:auto;box-shadow:0 18px 50px #000a;animation:popin .18s ease-out}
+.modal h3{margin:0 0 6px;color:var(--text);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+.modal h3:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.modal .hint{color:var(--muted);line-height:1.5}
+.modal .hint b{color:var(--text)}
+.modal ul{list-style:none;padding:6px 8px;margin:6px 0;max-height:150px;overflow:auto;background:#1e1e1e;border:1px solid var(--bd2);border-radius:7px;color:var(--muted);font-size:11px}
+.modal li{padding:3px 2px 3px 14px;position:relative}
+.modal li:before{content:"";position:absolute;left:2px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--warn)}
+.modal #ok{min-width:72px}
+.modal.err h3:before{background:var(--err)}
+.modal.warn h3:before{background:var(--warn)}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 @keyframes popin{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
-.empty .rules{border:1px solid var(--line2)}
+
+.rz{position:fixed;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;z-index:99;touch-action:none;opacity:.7;background:linear-gradient(135deg,transparent 0 55%,#555 55% 62%,transparent 62% 72%,#555 72% 79%,transparent 79% 89%,#555 89%)}
+.rz:hover{opacity:1}
+body.resizing,body.resizing *{user-select:none!important;cursor:nwse-resize!important}
 
 /* ---- controles clean: caixa de seleção e campo numérico com setinhas próprias ---- */
 input[type=checkbox]{-webkit-appearance:none;appearance:none;width:15px;height:15px;margin:0;flex:none;border:1.5px solid #555;border-radius:4px;background:#1b1b1b;display:inline-grid;place-content:center;cursor:pointer;vertical-align:middle;transition:background-color .14s,border-color .14s,box-shadow .14s}
@@ -136,9 +149,6 @@ input[type=number]{-moz-appearance:textfield}
 .f2num .stp svg{width:7px;height:5px;display:block}
 
 /* ===== Quick Import (v2.8): barrinha só com ícones ===== */
-.qbtn{display:inline-flex;align-items:center;gap:5px;border:1px solid #2d8ceb55;background:#2d8ceb14;color:#9fc8f5;border-radius:99px;padding:3px 10px 3px 8px;font-size:11px;font-weight:600;white-space:nowrap;flex:none}
-.qbtn svg{width:11px;height:11px}
-.qbtn:hover{background:#2d8ceb2e;color:#fff;border-color:#2d8ceb99}
 #quick{display:none;align-items:center;gap:6px;height:100%;padding:0 8px;background:#1e1e1e}
 body.isquick .app,body.isquick .rz{display:none}
 body.isquick #quick{display:flex}
@@ -166,27 +176,29 @@ body.isquick #quick{display:flex}
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAALvUlEQVR4Xt1bW2wU1xn+z5nZ2V1j7BhaK0IUCiFQYqeuKESC2BjzRJVL04tFH4JaqYoLSKnUh/alD5Zf8tC+tVEbuVVUtWol5EptQquSgmjBpCiEkBrbSSCEKoBLMRDwbde7O3NO9Z/LzJndWe/sLgHMb628l7mc7z////2XOQcgvpDe3l6ru7vbBgAa/7S7JhTHhmMEABL3rnEOROB0aGjIMy/a19eXuHXrVkMmk7mnymhoaGAtLS2ZwcHBgjk+VMTQ0BADAL6QMiopAMHhRaC/v98eHh7uyeVyX+Gcf5kxtgoAlnLOUeP3TAghODEzlNJLlmWdTiQSh7q6uv4xMDDgqkH5GKKkrAKUBj38f+3ate+6rvsiY6wdL8I591/3gxBC/BcKpXTMtu2f9/T0/HpgYIBpLLEVgL507Ngxd+fOnV/MZrOvcM63ep4HjDG0BkbwjtLPKlnQ3RI0c44i8VNq20hVcDKdTu89evToWY2peEAlAPSBnZ2dzxUKhd9xzhtd13UJIRRfdwtRPcI5Z/iybdsmhMw6jvP88PDwa1FKCClAm0pXV9dX8/n8nxA359wjhNxTP69V9Nht2+aO43wNlVDsDv6M9vf3C6bv6elpy+fzf3BdV2hysYJHwbEjBsSCmBAbYkSsWqnaAoQ/4w+HDh066XneZs/zFu3MFwtagiXl9K5du7YiMarwyIUmuru70cTZ4cOHv8M5R/Do84vS7COZnhALMSG2I0eOfBuxKswBk/f19dlnzpwZY4w9qtm0Vt+7T0VEL0rph5s2bWofHBwUEYFilofmMDo6uh0A1jPGRCi5T0HUI1RhWz86OtqFmBE7nZycFDzAGHta+YXI/B5QEb6vsAJix4RHAPY8bwtjTJChzCceSCEK4xZEh9hFntzb2+twzj+HiR7nvL7sDtNSan0qr3oTT8SmMK5CzIhd5IuTk5MNjLFGNfM1WwACZ24evHwGE1MMxNWbUcQpOC7Mvq1EA1DbAc4i0/o4IrAhVsQMAHmhgMbGRjI9PV0H8RExOYW5W5BqWQkPf+kpaFzxGNjJJolHexTqpOgzKqrkO3FM8L2bm4Hpa+/D9f+8CdnpCUikmtU1a3ZVipjxNkIBplTr/zgznDNg+Sys2tEHa3a+AKnm5QEoUaYgsejUQ70XZFP0XdFxIYVxgPmp63Dh5CBcfOe3YNkpde/qlCDruEBCCqgWvJoo8ApZ2PiNl2D1jm+CO4eWUAjAAY8AKgcdKIAXgTXOkawsfk8kW6Bj14+hcdkjcPbv/WA56Thmv+AE+wrQ4LW/xRJiQSHzCXy+Z58An7+dB0wgqZFEEsNMpe4VeP8GpZ/NORJKUqbAvQLkZuZh3eZvwezNi3Dh1K8gkW4B4PE4QWMzJzrk96YSzKZH5HukUHde+PyanfvAnWMCPMHha7PHNyEXUJ+1HvTM+66wsLUQoOIehWweHt3yAqSbVgBzc/IyRpOm3HtpsWGX8RUgex2lB5QTbA24uQwsX78dUs1NwApebPASsDJ7DT6mqxBOgLkFaFj6WWhd3QluYU6MJY5o8BorSiQHxOICoXEGS1c8Js08xPRlZl6QnDrQJ7wo/0crKuUJ6Q4qQnAOzZ/5gpxt/ItJhsUuXsIBcUXej4CdXALAiT+4cmaPsZsKg9PHat9XHm+EPc5cIIDupKNEmBSlWxGwnUZfIdWIqayaowDRtuuHNYzb0TOPQJx0EtwcB+5i91rNsGH+4lTOgZIEOKkkFOZzEW4SRAR9rqaVuBYgps0IhSV5QDXiW50PxIz5gWnj/Ub/9jO4PHJw4SwOlUkprG5/Bto79wPDjM+4tg6HAoRIqtSP1aUCIak9DBo+H1iBju3yRzR7nPmxN16G03/8IThLli1ssmpm/vfRCcH4HTtehHxmDrUSyiWCadfUE08DUWFQKGBqaioUAWKZE5HkY/qu9NnADSih4OUYXHr3NQE+kWysmMdrRv947HVo37ZXfo7KGH1+UD9XSYIac30WYAxM+kMQDSQfEGCeK0EjWzNPRI7Kgse6wFwkw4AvzPApJz2YhDhS1gK0mIlQRVEWoGdCDE4RuuZHP2zVIkbIE1ZmhMaw4muzAC0lGURcUwoGoUJUBAGaFlGL+KSnEyeD/IIgZOQgFSQKW8gFarGAkH8aHBAkLZWGtYAUlc9m9WgqpdpEqGweULWY2Z/BAdpXhf/WI2ak8UkvIFn5XXwLiJL6XEANIKrWN12kVvFJzwivIv4bfYNqDOwuuYCcqlBIFAhqU0Nk4WQQpFkJxhFdKWqpywJ06JWtZF3qB3m7GatrEqxQ1XWD6+tiSF8xvg3ccQtQCbwfk8MlrfzeohZQKpftxClb5TF4rA2UJoB7bkk6rOlG1w/Fs7ogr6q+gZbInmBx3yxSZBIYEQV0PUBEMmM7SVj9+LNw9aNh4zLlZk36SS57C9ZsfBoSdhJyhZzfYdJh0awSq5GoblddYVBn4j4pSfcPogB2b+Zz0PbkXqGtj8cOAhOlblDvFwues2bjM/D4E3uhMD8HFCx1TYP9jcaq6gZEmneUVLSAqqUoLEUxN1Z1HTu+D+3b9ovnBrInUFQ6ozAOFrXBtpNQyM35TZZwQhSuN/xoU6PU3BZHoIJUfDcwmD+i5Y1VnejpIe+K88wsQWeTsnYQZo8zH1H/mz2HwJPiW0DZtng1RCItXd60MD9jtMRUl8dUiuYEbJjKmBVkcaE+glFFxgCPPFDIzwDj+Dgv/vTf0TCIcvvqOK4bC5aaRIAvnknZzAjELJ50Cl1s9qGZVwx888Z7VSUYdzQMcvDAdpbA1Q//CZnbNyCZbhblq1haUObBhkmQJYRpWMOC4BkDiyZhdvq/MHHpOCTsBtk5ipkP3EEL4EAtB+ZuX4b3j78MTgpjtocLDUJJSwnZlekK6/FXAo89hZTTAGfffQVmZibEGKoBXyy1h0FBxq54UPnBvwahafk62LjtechnCpLpi8KWXxr7eYLoJ/lWIXOK6AcnuvKzrSQkU80w+u/fwNjIq5BMNomwWo18CmEQxIPKtw7+CKaun4f2J/fDkqaHKz8cVcQVap4Up71Fx8xOT8Bbb74E42dfBdtOVUV+5aTmtngg8tm9nWiA9078QiQ7Kx7ZDg+1bgRHPB5Xj8pU46KkT6CLp6LSV36WFpHPTcMnNz6AK5ePw+zMFUgmH5JxKFZ7bWERCrAsXE9Y+9Uku3JwGlogl7kJ59/5vfJL3SOrxkhLBZ0FFYlKTqZaKjZWKwliRcx4nFBAa2trZmJiYhYAlqEm1GLoqgUJitAEJPGJLYKuIj7HEZyjOlaHIHCBDdcPI2YRntWSOLZu3bphz/M6cVUlGkWcAS1CEatfLcs6ceHCBVwqR3GbiegJWJb1NiG4hKaavGpxibIAtIK3ceSI3W5tbRWGSin9KwD8gHO5fPZBFIWNJBKJvyjX57hCHJ9UkK6uruMAcF75f5ynF4tNxFJZQsj5zs5ObE4QxC6WyeLCYdx0ZNv2TymluJYONxz4ScOD8B4xITbLsn6CWNViaX9RpGjroU9cuXLlpOu6mxljD9RyeUopbpw4vXLlyq1qdayI3WaEFqtGOzo62qanp0+5rotLsJAwFjUnqPyG2LadbWpqemJkZGRcRz4dBk3B8Odt2LDh2Xw+/2fcMoOfF3FYFGNXW2aeO3fu3OsKi7+srHh2PdxYhAemUqmvW5Y1p7adYMWxmIgROUxs+kAMiAUxqV2voTV15ZJUzBDdtra2jmw2+0vP88S2ObWHSESN+3HbnKgnORe72yzLwtwGt83tGx8fH1FZb0npWM6/8UALT9yzZ0+n4zjfs217zLIssSVPbaeRDfz744WgcXA2jhHHimPGsSvw6NqRdXOlMiW0dfbAgQM9+Xx+F2MM9xbg1llcYX5P02a1dXYWt85SSk85jvPG7t276986a4iuF0K+g+vtL168mE6n0/c0SmSzWbZ27drs0NAQ9ttLCL1StlbJAqIUgeeILbSVLn6XBSdCJHZqbLFq0f8DXRq1lhH6FLsAAAAASUVORK5CYII=" alt="">Figma2AE<span class="vchip" id="vchip" title="Versão do plugin">v2.10.1</span></div>
-    <div class="status" id="status">Selecione o que quer levar pro After Effects.</div>
+    <div class="brand"><img class="logo" src="data:image/png;base64,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" alt="">Figma2AE<span class="vchip" id="vchip" title="Versão do plugin">v2.11.0</span></div>
+    <span class="sp"></span>
     <button class="qbtn" id="qopen" title="Janelinha flutuante: clique em camadas no Figma e importe soltas na comp aberta do After"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9.2 1 3 9h4.2L6.6 15 13 6.8H8.7z"/></svg> Quick Import</button>
     <div class="aepill" id="aepill" title="Painel Figma2AE no After Effects"><span class="aedot" id="aedot"></span><span id="aetxt">AE</span></div>
   </div>
   <div class="upd" id="upd" hidden></div>
   <div class="main" id="main"></div>
-  <div class="opts">
+  <div class="opts" id="opts">
+    <button class="ohead" id="ohead" type="button"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5 5 6.5 8 3.5"/></svg>Opções<span class="sum" id="osum"></span></button>
     <div class="optgrid">
-      <label title="Imagem do frame no Figma como camada-guia oculta no topo do comp, pra conferir o design"><input type="checkbox" id="oRef" checked> Referência do Figma (guia)</label>
-      <label><input type="checkbox" id="oBg" checked> Fundo do frame</label>
-      <label title="Marca nos comentários das camadas se o elemento é novo, igual ou mudou em relação ao frame anterior da cena"><input type="checkbox" id="oCont" checked> Continuidade nos comentários</label>
-      <label title="Campos de pontos e vetores com centenas de formas viram uma imagem em alta: importa muito mais rápido e o After fica leve. Desmarque pra manter tudo editável como shape."><input type="checkbox" id="oHeavy" checked> Vetores pesados viram imagem</label>
-      <label title="Títulos curtos (até ~120 caracteres, 2 a 6 linhas) viram uma camada de texto por linha, na posição exata do Figma, presas a um nulo — pronto pra animar linha a linha. Textos longos continuam numa camada só."><input type="checkbox" id="oLines" checked> Títulos em uma camada por linha</label>
-      <label>Qualidade das imagens <select id="oScale"><option value="1">1x</option><option value="2" selected>2x</option><option value="3">3x</option><option value="4">4x</option></select></label>
+      <label title="Imagem do frame no Figma como camada-guia oculta no topo do comp, pra conferir o design"><input type="checkbox" id="oRef" checked> Referência (guia)</label>
+      <label title="Inclui o preenchimento do frame como camada de fundo"><input type="checkbox" id="oBg" checked> Fundo do frame</label>
+      <label title="Marca nos comentários das camadas se o elemento é novo, igual ou mudou em relação ao frame anterior da cena"><input type="checkbox" id="oCont" checked> Continuidade</label>
+      <label title="Campos de pontos e vetores com centenas de formas viram uma imagem em alta: importa muito mais rápido e o After fica leve. Desmarque pra manter tudo editável como shape."><input type="checkbox" id="oHeavy" checked> Vetor pesado → imagem</label>
+      <label title="Títulos curtos (até ~120 caracteres, 2 a 6 linhas) viram uma camada de texto por linha, na posição exata do Figma, presas a um nulo — pronto pra animar linha a linha. Textos longos continuam numa camada só."><input type="checkbox" id="oLines" checked> Título por linha</label>
+      <label title="Resolução das imagens exportadas (fotos, efeitos, vetores pesados)">Qualidade <select id="oScale"><option value="1">1x</option><option value="2" selected>2x</option><option value="3">3x</option><option value="4">4x</option></select></label>
     </div>
     <div class="go">
       <button class="btn primary" id="exportar" disabled>Enviar pro After Effects</button>
-      <button class="btn" id="salvar" disabled title="Salvar um arquivo .f2ae.zip pra importar depois">Salvar .zip</button>
+      <button class="btn" id="salvar" disabled title="Salvar um arquivo .f2ae.zip pra importar depois (painel Figma2AE › Abrir pacote…)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v7.5M4.8 7 8 10.2 11.2 7M3 12.8h10"/></svg>.zip</button>
     </div>
-    <div class="hint" id="aehint" style="margin-top:7px"></div>
+    <div class="foot"><span id="status"></span></div>
+    <div class="hint" id="aehint" hidden></div>
   </div>
 </div>
 <div id="quick">
@@ -201,7 +213,7 @@ body.isquick #quick{display:flex}
 </div>
 <div class="rz" id="rz"></div>
 <script>
-const F2AE_VERSION = "2.10.1"; // carimbado pelo tools/publicar.py
+const F2AE_VERSION = "2.11.0"; // carimbado pelo tools/publicar.py
 const $ = s => document.querySelector(s);
 setTimeout(() => { const v = document.getElementById("vchip"); if (v) v.textContent = "v" + F2AE_VERSION; }, 0);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -221,7 +233,10 @@ async function pingAE() {
   $("#aedot").className = "aedot" + (AE.on ? " on" : "");
   $("#aetxt").textContent = AE.on ? "AE conectado" : "AE desconectado";
   $("#aepill").title = AE.on ? "Painel aberto no After Effects" + (AE.project ? " · " + AE.project : "") : "Abra no After Effects: Janela → Extensões → Figma2AE";
-  $("#aehint").textContent = AE.on ? (AE.route === "studio" ? "Ao enviar, o Figma2AE Studio abre com as telas pra separar as tomadas e montar no After." : AE.auto ? "O After Effects está em modo automático: importa assim que receber." : "Ao enviar, o painel Figma2AE abre no After Effects com os comps pra importar.") : "O After Effects não respondeu. Ele precisa estar aberto (a extensão Figma2AE liga junto com ele). Ou salve o .zip.";
+  const dest = AE.route === "studio" ? "Abre no Figma2AE Studio pra separar as tomadas e montar no After." : AE.auto ? "Modo automático: o After importa assim que receber." : "Abre no painel Figma2AE do After pra você importar.";
+  $("#exportar").title = AE.on ? dest : "";
+  $("#aehint").hidden = AE.on; $("#aehint").className = "hint warn";
+  $("#aehint").textContent = AE.on ? "" : "After Effects fechado: abra ele (a extensão liga junto) ou salve o .zip.";
   paintUpdate();
   setBusy(busy);
   if (QUICK) qrender();
@@ -267,6 +282,14 @@ async function runUpdate() {
 }
 const OPT_KEYS = ["oRef", "oBg", "oCont", "oHeavy", "oLines", "oScale"];
 try { const o = JSON.parse(localStorage.getItem("f2ae_opts") || "{}"); OPT_KEYS.forEach(k => { if (o[k] === undefined) return; const el = $("#" + k); if (el.type === "checkbox") el.checked = o[k]; else el.value = o[k]; }); } catch (e) {}
+function optSummary() {
+  const n = ["oRef", "oBg", "oCont", "oHeavy", "oLines"].filter(k => $("#" + k).checked).length;
+  $("#osum").textContent = n + " de 5 ligadas · " + $("#oScale").value + "x";
+}
+try { if (localStorage.getItem("f2ae_optsClosed") === "1") $("#opts").classList.add("closed"); } catch (e) {}
+$("#ohead").onclick = () => { const c = $("#opts").classList.toggle("closed"); try { localStorage.setItem("f2ae_optsClosed", c ? "1" : "0"); } catch (e) {} };
+optSummary();
+OPT_KEYS.forEach(k => $("#" + k).addEventListener("change", optSummary));
 OPT_KEYS.forEach(k => $("#" + k).onchange = () => { try { const o = {}; OPT_KEYS.forEach(x => { const el = $("#" + x); o[x] = el.type === "checkbox" ? el.checked : el.value; }); localStorage.setItem("f2ae_opts", JSON.stringify(o)); } catch (e) {} });
 
 /* ---------- Quick Import ---------- */
@@ -334,12 +357,13 @@ function setBusy(b) { busy = b; const n = checked().length; $("#exportar").disab
 function render() {
   const m = $("#main");
   if (!TARGETS.length) {
-    m.innerHTML = `<div class="empty">Nada selecionado.<br>Selecione no Figma <b>o que quer importar</b>.
+    m.innerHTML = `<div class="empty"><div class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 2.5v15M14 2.5v15M2.5 6h15M2.5 14h15"/></svg></div>
+      <h4>Nada selecionado</h4><p>Selecione no Figma o que quer levar pro After.</p>
       <div class="rules">
-        <div><i>▢</i><span><b>Um frame</b> → um comp idêntico a ele.</span></div>
-        <div><i>▤</i><span><b>Vários frames</b> → um comp separado pra cada.</span></div>
-        <div><i>▦</i><span><b>A cena inteira</b> (o frame/Section que guarda os frames) → um comp por frame.</span></div>
-        <div><i>◇</i><span><b>Objetos dentro de um frame</b> → comp do tamanho do frame só com eles.</span></div>
+        <div><i>▢</i><span><b>Um frame</b> → um comp idêntico a ele</span></div>
+        <div><i>▤</i><span><b>Vários frames</b> → um comp pra cada</span></div>
+        <div><i>▦</i><span><b>A cena inteira</b> (frame ou Section com os frames) → um comp por frame</span></div>
+        <div><i>◇</i><span><b>Objetos de um frame</b> → comp do tamanho do frame só com eles</span></div>
       </div></div>`;
     $("#exportar").textContent = "Enviar pro After Effects"; setBusy(busy); return;
   }
@@ -354,9 +378,9 @@ function render() {
     // com frame-contêiner junta pelo contêiner; sem ele (cena agrupada pelo nome) junta pelo grupo
     const cont = c0 ? c0 : (g && frames.length > 1 ? { containerId: "g:" + g, containerName: g, whole: frames.every(t => t.whole) } : null);
     if (g || list.length > 1 || cont) {
-      h += `<div class="grph"><label><input type="checkbox" data-grp="${esc(g)}" ${on === list.length ? "checked" : ""} ${on && on < list.length ? 'data-mixed="1"' : ""}><span>${esc(g || "Seleção")}</span></label>`;
-      if (cont && cont.whole) h += `<button class="mini on" data-split="${esc(cont.containerId)}" title="Voltar a criar um comp pra cada frame de dentro">Separar (1 comp por frame)</button>`;
-      else if (cont && list.length > 1) h += `<button class="mini" data-whole="${esc(cont.containerId)}" title="Os frames de “${esc(cont.containerName)}” viram UMA comp em 1920×1080, um depois do outro no tempo (não lado a lado)">Juntar numa comp só (em sequência)</button>`;
+      h += `<div class="grph"><label><input type="checkbox" data-grp="${esc(g)}" ${on === list.length ? "checked" : ""} ${on && on < list.length ? 'data-mixed="1"' : ""}><span>${esc(g || "Seleção")} · ${list.length}</span></label>`;
+      if (cont && cont.whole) h += `<button class="mini on" data-split="${esc(cont.containerId)}" title="Voltar a criar um comp pra cada frame de dentro">Separar em comps</button>`;
+      else if (cont && list.length > 1) h += `<button class="mini" data-whole="${esc(cont.containerId)}" title="Os frames de “${esc(cont.containerName)}” viram UMA comp em 1920×1080, um depois do outro no tempo (não lado a lado)">Juntar em sequência</button>`;
       h += `</div>`;
     }
     list.forEach(t => {
@@ -436,7 +460,7 @@ onmessage = ev => {
   else if (m.type === "selection") {
     QSEL = m.quick || []; if (QUICK) qrender();
     TARGETS = m.targets || [];
-    if (!busy) status(m.error ? "Erro ao ler a seleção: " + m.error : TARGETS.length ? `${m.count} ite${m.count > 1 ? "ns" : "m"} selecionado${m.count > 1 ? "s" : ""}` : "Selecione o que quer levar pro After Effects.");
+    if (!busy) status(m.error ? "Erro ao ler a seleção: " + m.error : "");
     render();
   }
   else if (m.type === "thumb") {
@@ -453,10 +477,10 @@ onmessage = ev => {
     const save = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = m.name + ".f2ae.zip"; document.body.appendChild(a); a.click(); a.remove(); };
     const done = (title, text) => {
       setBusy(false);
-      const d = document.createElement("div"); d.className = "modal";
+      const d = document.createElement("div"); d.className = "modal" + (w.length ? " warn" : "");
       d.innerHTML = `<div><h3>${title}</h3><p class="hint" style="font-size:12px">${text}</p>
-        ${w.length ? `<p style="margin:12px 0 4px;font-size:12px">Avisos (${w.length}):</p><ul>${w.slice(0, 30).map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="hint" style="font-size:12px;margin-top:10px">Tudo saiu como camada nativa editável.</p>`}
-        <div style="text-align:right;margin-top:12px"><button class="btn" id="ok">Ok</button></div></div>`;
+        ${w.length ? `<p style="margin:12px 0 4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Avisos (${w.length}):</p><ul>${w.slice(0, 30).map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="hint" style="font-size:12px;margin-top:10px">Tudo saiu como camada nativa editável.</p>`}
+        <div style="text-align:right;margin-top:12px"><button class="btn primary" style="flex:none" id="ok">Ok</button></div></div>`;
       document.body.appendChild(d); d.querySelector("#ok").onclick = () => d.remove();
       if (!w.length) setTimeout(() => d.remove(), 2600);
     };
@@ -471,9 +495,9 @@ onmessage = ev => {
         })
         .catch(e => {
           status("Não consegui enviar: " + e.message); setBusy(false);
-          const d = document.createElement("div"); d.className = "modal";
+          const d = document.createElement("div"); d.className = "modal err";
           d.innerHTML = `<div><h3>Não consegui falar com o After Effects</h3><p class="hint" style="font-size:12px">Confira se o After Effects está aberto. Se acabou de instalar ou atualizar a extensão, feche e abra o After Effects uma vez. Detalhe: ${esc(e.message)}</p>
-            <div style="text-align:right;margin-top:12px;display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="sv">Salvar .zip</button><button class="btn" id="ok">Fechar</button></div></div>`;
+            <div style="text-align:right;margin-top:12px;display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="sv">Salvar .zip</button><button class="btn primary" style="flex:none" id="ok">Fechar</button></div></div>`;
           document.body.appendChild(d); d.querySelector("#ok").onclick = () => d.remove(); d.querySelector("#sv").onclick = () => { save(); d.remove(); };
         });
     } else {
