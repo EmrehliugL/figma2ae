@@ -524,8 +524,45 @@ function neutralContainer(n) {
   if ("blendMode" in n && n.blendMode !== "PASS_THROUGH" && n.blendMode !== "NORMAL") return false;
   if ("effects" in n && n.effects && n.effects.some(function (e) { return e.visible !== false; })) return false;
   if (hasMaskChild(n)) return false;
-  if (n.type !== "GROUP" && n.clipsContent) return false;
+  if (n.type !== "GROUP" && n.clipsContent && !clipIsNoop(n)) return false;
   return true;
+}
+function opacityOnlyContainer(n) {
+  if (!("opacity" in n) || n.opacity >= 0.999) return false;
+  if ("fills" in n && visiblePaints(n.fills).length) return false;
+  if ("strokes" in n && visiblePaints(n.strokes).length) return false;
+  if ("blendMode" in n && n.blendMode !== "PASS_THROUGH" && n.blendMode !== "NORMAL") return false;
+  if ("effects" in n && n.effects && n.effects.some(function (e) { return e.visible !== false; })) return false;
+  if (hasMaskChild(n)) return false;
+  if (n.type !== "GROUP" && n.clipsContent && !clipIsNoop(n)) return false;
+  return true;
+}
+/* "Clip content" ligado, mas nada sai pra fora do frame (nem invade os cantos arredondados):
+   o recorte não muda nada, então o frame não precisa virar precomp (v2.4) */
+function clipIsNoop(n) {
+  try {
+    var t = n.absoluteTransform;
+    if (Math.abs(t[0][1]) > 1e-6 || Math.abs(t[1][0]) > 1e-6 || t[0][0] <= 0 || t[1][1] <= 0) return false; // girado/espelhado: não arrisca
+    var x0 = t[0][2], y0 = t[1][2], x1 = x0 + n.width * t[0][0], y1 = y0 + n.height * t[1][1], tol = 0.5;
+    var r = 0;
+    if ("cornerRadius" in n) {
+      if (isMixed(n.cornerRadius)) ["topLeftRadius", "topRightRadius", "bottomLeftRadius", "bottomRightRadius"].forEach(function (k) { if (typeof n[k] === "number") r = Math.max(r, n[k]); });
+      else r = n.cornerRadius || 0;
+    }
+    r = r * Math.min(t[0][0], t[1][1]);
+    var kids = (n.children || []).filter(function (c) { return c.visible !== false; });
+    for (var i = 0; i < kids.length; i++) {
+      var b = kids[i].absoluteRenderBounds;
+      if (!b) continue; // nada visível
+      if (b.x < x0 - tol || b.y < y0 - tol || b.x + b.width > x1 + tol || b.y + b.height > y1 + tol) return false;
+      if (r > 0.5) {
+        var bx1 = b.x + b.width, by1 = b.y + b.height;
+        var inL = b.x < x0 + r, inR = bx1 > x1 - r, inT = b.y < y0 + r, inB = by1 > y1 - r;
+        if ((inL && inT) || (inR && inT) || (inL && inB) || (inR && inB)) return false;
+      }
+    }
+    return true;
+  } catch (e) { return false; }
 }
 function solidList(arr) { return arr.map(function (p) { return { color: colorOf(p), alpha: p.opacity === undefined ? 1 : p.opacity }; }); }
 function geomList(g) { return (g || []).map(function (x) { return { data: x.data, rule: x.windingRule }; }); }
@@ -758,6 +795,14 @@ Exporter.prototype.spec = async function (node, containerAbs, depth) {
       for (i = 0; i < kids.length; i++) base.children.push(await this.spec(kids[i], containerAbs, depth + 1));
       bg = await this.frameBg(node, containerAbs, "stroke");
       if (bg) base.children.push(bg);
+      return base;
+    }
+    if (kids.length === 1 && !CONTAINER_TYPES[kids[0].type] && opacityOnlyContainer(node)) {
+      // contêiner que só tem opacidade e um filho: a opacidade desce pro filho, sem precomp (v2.4)
+      base.kind = "group";
+      var only = await this.spec(kids[0], containerAbs, depth + 1);
+      only.opacity = r2((only.opacity === undefined ? 1 : only.opacity) * node.opacity);
+      base.children = [only];
       return base;
     }
     base.kind = "precomp";

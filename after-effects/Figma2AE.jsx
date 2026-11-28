@@ -7,7 +7,7 @@
  *  e ative Preferências > Scripting e Expressões > "Permitir que scripts gravem arquivos e acessem a rede".
  */
 (function F2AE(thisObj) {
-    var VERSION = "2.3.9";
+    var VERSION = "2.4.0";
     var SETTINGS = "Figma2AE";
     var IS_WIN = $.os.toLowerCase().indexOf("windows") >= 0;
 
@@ -212,7 +212,8 @@
     }
     function common(layer, spec, ctx) {
         try { layer.name = spec.name || layer.name; } catch (e) {}
-        if (spec.opacity !== undefined && spec.opacity < 0.999) tr(layer).property("ADBE Opacity").setValue(spec.opacity * 100);
+        var op = (spec.opacity === undefined ? 1 : spec.opacity) * (spec._paintAlpha === undefined ? 1 : spec._paintAlpha);
+        if (op < 0.999) tr(layer).property("ADBE Opacity").setValue(op * 100);
         if (spec.blend && BLEND[spec.blend]) { try { layer.blendingMode = BlendingMode[BLEND[spec.blend]]; } catch (e) {} }
         if (spec.effects) each(spec.effects, function (fx) { addEffect(layer, fx, ctx); });
     }
@@ -729,7 +730,180 @@
         var f = v.addProperty("ADBE Vector Graphic - Fill"); f.property("ADBE Vector Fill Color").setValue([1, 1, 1, 1]);
         return m;
     }
+    /* ---------- pilha de preenchimentos SEM precomp (v2.4) ----------
+       Cada preenchimento vira uma camada direto no comp, já na posição final, recortada por uma MÁSCARA de camada
+       com a forma do elemento (em vez de comp interno + comp externo + track matte). As camadas extras ficam
+       parentadas na principal. Se o caso não der pra fazer assim (blend entre preenchimentos, imagem em mosaico,
+       forma composta, efeitos sobre várias camadas…), cai no jeito antigo com precomp. */
+    function aeVer() { try { return parseFloat(app.version) || 0; } catch (e) { return 0; } }
+    function vec(p) { var v = p.value; return [v[0], v[1]]; }
+    function localMatrix(layer) {
+        var t = tr(layer), A = vec(t.property("ADBE Anchor Point")), P = vec(t.property("ADBE Position")), S = vec(t.property("ADBE Scale"));
+        var r = 0; try { r = t.property("ADBE Rotate Z").value || 0; } catch (e) {}
+        var th = r * Math.PI / 180, cs = Math.cos(th), sn = Math.sin(th), sx = S[0] / 100, sy = S[1] / 100;
+        var a = cs * sx, b = sn * sx, c = -sn * sy, d = cs * sy;
+        return { a: a, b: b, c: c, d: d, tx: P[0] - (a * A[0] + c * A[1]), ty: P[1] - (b * A[0] + d * A[1]) };
+    }
+    function mul(X, L) {
+        return { a: X.a * L.a + X.c * L.b, b: X.b * L.a + X.d * L.b, c: X.a * L.c + X.c * L.d, d: X.b * L.c + X.d * L.d,
+            tx: X.a * L.tx + X.c * L.ty + X.tx, ty: X.b * L.tx + X.d * L.ty + X.ty };
+    }
+    function invM(M) {
+        var det = M.a * M.d - M.b * M.c; if (Math.abs(det) < 1e-12) det = 1e-12;
+        return { a: M.d / det, b: -M.b / det, c: -M.c / det, d: M.a / det, tx: (M.c * M.ty - M.d * M.tx) / det, ty: (M.b * M.tx - M.a * M.ty) / det };
+    }
+    function hasSkew(M) {
+        var q = decompose(M), th = q.rot * Math.PI / 180;
+        var c2 = -Math.sin(th) * q.sy, d2 = Math.cos(th) * q.sy, tol = 1e-4 * (Math.abs(q.sy) + 1);
+        return Math.abs(M.c - c2) > tol || Math.abs(M.d - d2) > tol;
+    }
+    function setWorld(layer, W) {
+        var q = decompose(W), t = tr(layer);
+        t.property("ADBE Anchor Point").setValue([0, 0]);
+        t.property("ADBE Position").setValue([W.tx, W.ty]);
+        t.property("ADBE Scale").setValue([q.sx * 100, q.sy * 100]);
+        t.property("ADBE Rotate Z").setValue(Math.abs(q.rot) > 0.001 ? q.rot : 0);
+    }
+    var KAPPA = 0.5522847498;
+    // contorno do elemento (no espaço do elemento) como lista de vértices + tangentes; null = não dá pra máscara simples
+    function elementOutline(spec) {
+        var W = spec.w, H = spec.h, k;
+        if (spec.prim === "ellipse") {
+            var rx = W / 2, ry = H / 2; k = KAPPA;
+            return { v: [[W, ry], [rx, H], [0, ry], [rx, 0]], it: [[0, -ry * k], [rx * k, 0], [0, ry * k], [-rx * k, 0]], ot: [[0, ry * k], [-rx * k, 0], [0, -ry * k], [rx * k, 0]] };
+        }
+        if (spec.prim === "path") {
+            var subs = []; each(spec.fillGeometry || [], function (gm) { each(parsePath(gm.data), function (sp) { subs.push(sp); }); });
+            if (subs.length !== 1) return null;
+            return { v: subs[0].v, it: subs[0].it, ot: subs[0].ot };
+        }
+        var r = Math.min(spec.radius || 0, Math.min(W, H) / 2);
+        if (r <= 0.01) return { v: [[0, 0], [W, 0], [W, H], [0, H]], it: [[0, 0], [0, 0], [0, 0], [0, 0]], ot: [[0, 0], [0, 0], [0, 0], [0, 0]] };
+        k = r * KAPPA;
+        return {
+            v: [[r, 0], [W - r, 0], [W, r], [W, H - r], [W - r, H], [r, H], [0, H - r], [0, r]],
+            it: [[-k, 0], [0, 0], [0, -k], [0, 0], [k, 0], [0, 0], [0, k], [0, 0]],
+            ot: [[0, 0], [k, 0], [0, 0], [0, k], [0, 0], [-k, 0], [0, 0], [0, -k]]
+        };
+    }
+    // máscara com a forma do elemento, convertida pro espaço da camada (Linv = elemento → camada)
+    function addOutlineMask(layer, ol, Linv, name) {
+        var sh = new Shape(), v = [], it = [], ot = [];
+        for (var i = 0; i < ol.v.length; i++) {
+            var p = ol.v[i];
+            v.push([Linv.a * p[0] + Linv.c * p[1] + Linv.tx, Linv.b * p[0] + Linv.d * p[1] + Linv.ty]);
+            it.push([Linv.a * ol.it[i][0] + Linv.c * ol.it[i][1], Linv.b * ol.it[i][0] + Linv.d * ol.it[i][1]]);
+            ot.push([Linv.a * ol.ot[i][0] + Linv.c * ol.ot[i][1], Linv.b * ol.ot[i][0] + Linv.d * ol.ot[i][1]]);
+        }
+        sh.vertices = v; sh.inTangents = it; sh.outTangents = ot; sh.closed = true;
+        var masks = layer.property("ADBE Mask Parade"), had = masks.numProperties || 0;
+        var m = masks.addProperty("ADBE Mask Atom");
+        m.property("ADBE Mask Shape").setValue(sh);
+        // já tem máscara de trecho de gradiente: a forma entra como interseção
+        if (had > 0) { try { m.maskMode = MaskMode.INTERSECT; } catch (e) {} }
+        m.name = name || "Forma";
+        return m;
+    }
+    function strokeOnly(comp, spec) {
+        var hasStroke = (spec.strokeGeometry && spec.strokeGeometry.length && spec.strokeFill) || (spec.strokes && spec.strokes.length);
+        if (!hasStroke) return null;
+        var sl = comp.layers.addShape();
+        if (spec.strokes && spec.strokes.length) addStrokeGroup(sl.property("ADBE Root Vectors Group"), spec, 0, 0);
+        else { var sg = addPathGroup(sl.property("ADBE Root Vectors Group"), "Contorno", spec.strokeGeometry, 0, 0); addFill(sg.vectors, spec.strokeFill, 1); }
+        applyXf(sl, spec.xf, 1);
+        return sl;
+    }
+    function gradientNeedsAlpha(pa) { for (var i = 0; i < (pa.stops || []).length; i++) if (pa.stops[i].alpha < 0.999) return true; return false; }
+    function gradientPieces(pa) {
+        if (!pa.stops || pa.stops.length < 2) return 1;
+        return pa.type === "linear" ? pa.stops.length - 1 : (pa.rings || []).length;
+    }
+    function canFlatten(spec) {
+        if (aeVer() < 16) return false;
+        var outline = elementOutline(spec);
+        if (!outline) return false;
+        var visible = 0, alphaMattes = 0;
+        for (var i = 0; i < spec.paints.length; i++) {
+            var pa = spec.paints[i];
+            if (pa.blend && pa.blend !== "NORMAL" && pa.blend !== "PASS_THROUGH") return false;
+            if (pa.type === "image") { if (pa.mode === "TILE") return false; visible++; }
+            else if (pa.type === "solid") visible++;
+            else if (pa.type === "linear" || pa.type === "radial") {
+                var n = gradientPieces(pa);
+                if (gradientNeedsAlpha(pa)) { if (n !== 1) return false; alphaMattes++; }
+                visible += n;
+            } else return false;
+        }
+        var hasStroke = (spec.strokeGeometry && spec.strokeGeometry.length && spec.strokeFill) || (spec.strokes && spec.strokes.length);
+        if (hasStroke) visible++;
+        if (!visible) return false;
+        var single = visible === 1;
+        var fx = spec.effects && spec.effects.length;
+        if (alphaMattes && (fx || spec.matte || spec.bgShape)) return false; // a camada já usa o track matte da transparência
+        if (!single) {
+            // várias camadas: só quando o elemento não tem nada que precise valer pro conjunto todo
+            if (spec.opacity !== undefined && spec.opacity < 0.999) return false;
+            if (spec.blend && spec.blend !== "NORMAL" && spec.blend !== "PASS_THROUGH") return false;
+            if (fx || spec.matte || spec.bgShape) return false;
+        }
+        return true;
+    }
+    function buildPaintFlat(comp, spec, ctx) {
+        var W = Math.max(1, spec.w), H = Math.max(1, spec.h), name = spec.name || "Preenchimento";
+        var outline = elementOutline(spec), plainRect = spec.prim === "rect" && !(spec.radius > 0.01);
+        var made = [], aborted = false;
+        function place(l, isWH) {
+            // isWH: sólido do tamanho do elemento, ainda centralizado no comp → leva pro espaço do elemento
+            if (isWH) { var t = tr(l); t.property("ADBE Position").setValue([W / 2, H / 2]); }
+            var L = localMatrix(l), Wm = mul(spec.xf, L);
+            if (hasSkew(Wm)) { aborted = true; return; }
+            setWorld(l, Wm);
+            if (!(plainRect && isWH)) addOutlineMask(l, outline, invM(L), name + " · forma");
+        }
+        for (var i = 0; i < spec.paints.length && !aborted; i++) {
+            var pa = spec.paints[i], ls = [];
+            if (pa.type === "solid") {
+                var s = solidIn(comp, pa.color, name + " · cor", W, H, ctx); place(s, true); ls.push(s);
+            } else if (pa.type === "image") {
+                var il = buildPaint(comp, pa, W, H, ctx, name);
+                try { tr(il).property("ADBE Opacity").setValue(100); } catch (e) {}
+                place(il, false); ls.push(il);
+            } else {
+                var lbl = name + " · " + (pa.type === "linear" ? "gradiente linear" : "gradiente radial");
+                var cl = gradientLayers(comp, pa, W, H, "color", ctx, lbl);
+                var wh = pa.type === "linear" || !pa.stops || pa.stops.length < 2;
+                for (var k = 0; k < cl.length && !aborted; k++) { place(cl[k], wh); ls.push(cl[k]); }
+                if (!aborted && gradientNeedsAlpha(pa)) {
+                    var al = gradientLayers(comp, pa, W, H, "alpha", ctx, lbl + " · transparência")[0];
+                    place(al, wh);
+                    al.moveBefore(cl[0]);
+                    try { cl[0].setTrackMatte(al, TrackMatteType.LUMA); } catch (e) { try { cl[0].trackMatteType = TrackMatteType.LUMA; } catch (e2) {} }
+                    try { al.enabled = false; } catch (e) {}
+                    made.push(al);
+                }
+            }
+            for (var j = 0; j < ls.length; j++) {
+                if (pa.alpha !== undefined && pa.alpha < 0.999) try { tr(ls[j]).property("ADBE Opacity").setValue(pa.alpha * 100); } catch (e) {}
+                made.push(ls[j]);
+            }
+            if (ls.length === 1 && spec.paints.length === 1) spec._paintAlpha = pa.alpha === undefined ? 1 : pa.alpha;
+        }
+        if (aborted) { for (var r = 0; r < made.length; r++) try { made[r].remove(); } catch (e) {} spec._paintAlpha = undefined; return null; }
+        var st = strokeOnly(comp, spec);
+        if (st) { st.name = name + " · contorno"; made.push(st); }
+        // a camada de cima é a "principal" (leva o nome do elemento); as outras ficam parentadas nela
+        var main = null;
+        for (var m = made.length - 1; m >= 0; m--) { var cand = made[m]; var en = true; try { en = cand.enabled !== false; } catch (e) {} if (en) { main = cand; break; } }
+        if (!main) main = made[made.length - 1];
+        for (var q = 0; q < made.length; q++) if (made[q] !== main) { try { made[q].parent = main; } catch (e) {} }
+        var vis = 0; for (var z = 0; z < made.length; z++) { var on = true; try { on = made[z].enabled !== false; } catch (e) {} if (on) vis++; }
+        if (vis > 1) spec._paintAlpha = undefined;
+        ctx.flatFills = (ctx.flatFills || 0) + 1;
+        return main;
+    }
     function buildPaintStack(comp, spec, ctx) {
+        if (ctx.opts && ctx.opts.flatFills === false) { /* jeito antigo, forçado */ }
+        else if (canFlatten(spec)) { var flatL = buildPaintFlat(comp, spec, ctx); if (flatL) return flatL; }
         var pad = spec.pad || 0, W = Math.max(1, spec.w), H = Math.max(1, spec.h);
         var name = spec.name || "Preenchimento";
         // comp interno com as camadas de preenchimento (do tamanho do elemento: já recorta retângulos)
@@ -1031,7 +1205,7 @@
     }
 
     // expõe funções puras pra testes fora do AE
-    if (typeof F2AE_TEST !== "undefined") { F2AE_TEST.parsePath = parsePath; F2AE_TEST.decompose = decompose; F2AE_TEST.buildLayer = buildLayer; F2AE_TEST.flushStyles = flushStyles; return; }
+    if (typeof F2AE_TEST !== "undefined") { F2AE_TEST.parsePath = parsePath; F2AE_TEST.decompose = decompose; F2AE_TEST.buildLayer = buildLayer; F2AE_TEST.flushStyles = flushStyles; F2AE_TEST.canFlatten = canFlatten; return; }
     // usado pela extensão (painel HTML): só expõe a função, sem montar a janela ScriptUI
     if (typeof F2AE_HOST !== "undefined") { F2AE_HOST.importPackage = importPackage; F2AE_HOST.buildPlan = buildPlan; F2AE_HOST.version = VERSION; return; }
     // execução automatizada (testes): F2AE_RUN = { file: "...", out: "...", opts: {...} }
