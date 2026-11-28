@@ -1206,25 +1206,29 @@ async function quickExport(req) {
   var pkg = { format: "figma2ae", quick: true, mode: mode, version: 2, created: new Date().toISOString(), file: figma.root.name, page: figma.currentPage.name, options: opts, layers: [], comps: [] };
   // ordem do Figma (de baixo pra cima) pra empilhar igual no After
   nodes.sort(function (a, b) { return a.parent === b.parent ? a.parent.children.indexOf(a) - b.parent.children.indexOf(b) : 0; });
+  var IDENT = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
   for (var i = 0; i < nodes.length; i++) {
     var node = nodes[i];
     post({ type: "progress", text: "Exportando " + node.name + " (" + (i + 1) + "/" + nodes.length + ")…" });
-    var top = topFrameOf(node), frameAbs, center = false;
-    if (top && top !== node) frameAbs = m2o(top.absoluteTransform);
-    else {
-      // camada solta no canvas (ou o próprio frame): entra no meio da comp
-      var bb = node.absoluteRenderBounds || node.absoluteBoundingBox || { x: 0, y: 0 };
-      frameAbs = { a: 1, b: 0, c: 0, d: 1, tx: bb.x, ty: bb.y };
-      center = true;
-    }
+    // tudo em coordenadas absolutas do canvas; o After escolhe a referência (v2.9):
+    // o frame do tamanho da comp aberta → mesma posição do Figma; nenhum bate → a seleção entra centralizada
     var spec;
     if (mode === "raster") {
-      var base = ex.baseOf(node, frameAbs, null);
-      spec = await ex.raster(node, frameAbs, base, "IMAGES", "");
+      var base = ex.baseOf(node, IDENT, null);
+      spec = await ex.raster(node, IDENT, base, "IMAGES", "");
       delete spec.reason;
-    } else spec = await ex.spec(node, frameAbs, 0);
-    var bx = node.absoluteRenderBounds || node.absoluteBoundingBox;
-    pkg.layers.push({ spec: spec, center: center, w: bx ? r2(bx.width) : r2(node.width), h: bx ? r2(bx.height) : r2(node.height), frameW: top ? r2(top.width) : 0, frameH: top ? r2(top.height) : 0, frame: top ? top.name : "" });
+    } else spec = await ex.spec(node, IDENT, 0);
+    var bx = node.absoluteRenderBounds || node.absoluteBoundingBox || { x: 0, y: 0, width: node.width, height: node.height };
+    var refs = [];
+    for (var p = node; p && p.type !== "PAGE" && p.type !== "DOCUMENT"; p = p.parent) {
+      if (!(CONTAINER_TYPES[p.type] && p.type !== "GROUP")) continue;
+      var t = p.absoluteTransform;
+      if (Math.abs(t[0][1]) > 1e-6 || Math.abs(t[1][0]) > 1e-6 || Math.abs(t[0][0] - 1) > 1e-6 || Math.abs(t[1][1] - 1) > 1e-6) continue; // frame girado/escalado: não serve de referência
+      refs.push({ name: p.name, w: r2(p.width), h: r2(p.height), x: r2(t[0][2]), y: r2(t[1][2]) });
+    }
+    var top = topFrameOf(node);
+    pkg.layers.push({ spec: spec, abs: true, bounds: { x: r2(bx.x), y: r2(bx.y), w: r2(bx.width), h: r2(bx.height) }, refs: refs,
+      frameW: refs.length ? refs[0].w : 0, frameH: refs.length ? refs[0].h : 0, frame: top ? top.name : "" });
   }
   return { manifest: JSON.stringify(pkg), files: ex.files, count: nodes.length };
 }

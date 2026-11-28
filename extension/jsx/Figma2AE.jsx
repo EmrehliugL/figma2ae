@@ -7,7 +7,7 @@
  *  e ative Preferências > Scripting e Expressões > "Permitir que scripts gravem arquivos e acessem a rede".
  */
 (function F2AE(thisObj) {
-    var VERSION = "2.8.0";
+    var VERSION = "2.9.0";
     var SETTINGS = "Figma2AE";
     var IS_WIN = $.os.toLowerCase().indexOf("windows") >= 0;
 
@@ -1162,6 +1162,39 @@
     /* ============================================================ Quick Import (v2.5)
        Camadas escolhidas no Figma entram soltas na comp aberta (ou numa comp nova, se nenhuma estiver aberta).
        Cada camada do Figma vira a própria camada: shape/texto editável ou imagem PNG separada. */
+    /* Onde as camadas do Quick Import entram (v2.9):
+       1) se a camada está dentro de um frame do MESMO tamanho da comp aberta → exatamente a posição do Figma;
+       2) senão a seleção inteira entra CENTRALIZADA na comp (mantendo a distância entre as camadas). */
+    function quickRef(it, comp) {
+        var refs = it.refs || [];
+        for (var i = 0; i < refs.length; i++) if (Math.abs(refs[i].w - comp.width) <= 1.01 && Math.abs(refs[i].h - comp.height) <= 1.01) return refs[i];
+        return null;
+    }
+    function placeQuick(items, comp, ctx) {
+        var i, it, abs = false;
+        for (i = 0; i < items.length; i++) if (items[i].abs) abs = true;
+        if (!abs) { // pacote antigo (2.5 a 2.8)
+            for (i = 0; i < items.length; i++) { it = items[i]; if (it.center) shiftSpec(it.spec, (comp.width - (it.w || it.spec.w || 0)) / 2, (comp.height - (it.h || it.spec.h || 0)) / 2); }
+            return;
+        }
+        var refs = [], all = true;
+        for (i = 0; i < items.length; i++) { refs.push(quickRef(items[i], comp)); if (!refs[i]) all = false; }
+        if (all) {
+            for (i = 0; i < items.length; i++) shiftSpec(items[i].spec, -refs[i].x, -refs[i].y);
+            ctx.quickPlace = "frame";
+            return;
+        }
+        // centraliza o conjunto: caixa que envolve todas as camadas selecionadas
+        var x0 = 1e12, y0 = 1e12, x1 = -1e12, y1 = -1e12;
+        for (i = 0; i < items.length; i++) {
+            var b = items[i].bounds; if (!b) continue;
+            x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.w); y1 = Math.max(y1, b.y + b.h);
+        }
+        if (x0 > x1) { x0 = 0; y0 = 0; x1 = 0; y1 = 0; }
+        var dx = comp.width / 2 - (x0 + x1) / 2, dy = comp.height / 2 - (y0 + y1) / 2;
+        for (i = 0; i < items.length; i++) shiftSpec(items[i].spec, dx, dy);
+        ctx.quickPlace = "center";
+    }
     function quickImport(jsonFile) {
         var pkg = parseJSON(readText(jsonFile));
         if (pkg.format !== "figma2ae" || !pkg.quick) throw new Error("Esse arquivo não é um Quick Import do Figma2AE.");
@@ -1182,18 +1215,15 @@
             }
             before = comp.numLayers;
             for (var j = 0; j < comp.numLayers; j++) { try { comp.layer(j + 1).selected = false; } catch (e) {} }
-            for (var k = 0; k < items.length; k++) {
-                var it = items[k], spec = it.spec;
-                if (it.center) shiftSpec(spec, (comp.width - (it.w || spec.w || 0)) / 2, (comp.height - (it.h || spec.h || 0)) / 2);
-                buildLayer(comp, spec, ctx);
-            }
+            placeQuick(items, comp, ctx);
+            for (var k = 0; k < items.length; k++) buildLayer(comp, items[k].spec, ctx);
             try { flushStyles(ctx); } catch (e) {}
             // deixa selecionado só o que acabou de entrar (fica no topo da comp)
             var added = comp.numLayers - before;
             for (var q = 1; q <= added; q++) { try { comp.layer(q).selected = true; } catch (e) {} }
         } finally { try { app.endSuppressDialogs(false); } catch (e) {} app.endUndoGroup(); }
         var fonts = []; for (var f in ctx.missingFonts) fonts.push(f);
-        return { layers: items.length, added: comp.numLayers - before, comp: comp.name, created: created, notes: ctx.notes, fonts: fonts };
+        return { layers: items.length, added: comp.numLayers - before, comp: comp.name, created: created, place: ctx.quickPlace || "", notes: ctx.notes, fonts: fonts };
     }
 
     /* ============================================================ painel */
@@ -1242,7 +1272,7 @@
     }
 
     // expõe funções puras pra testes fora do AE
-    if (typeof F2AE_TEST !== "undefined") { F2AE_TEST.parsePath = parsePath; F2AE_TEST.decompose = decompose; F2AE_TEST.buildLayer = buildLayer; F2AE_TEST.flushStyles = flushStyles; F2AE_TEST.canFlatten = canFlatten; F2AE_TEST.quickImport = quickImport; return; }
+    if (typeof F2AE_TEST !== "undefined") { F2AE_TEST.parsePath = parsePath; F2AE_TEST.decompose = decompose; F2AE_TEST.buildLayer = buildLayer; F2AE_TEST.flushStyles = flushStyles; F2AE_TEST.canFlatten = canFlatten; F2AE_TEST.quickImport = quickImport; F2AE_TEST.placeQuick = placeQuick; return; }
     // usado pela extensão (painel HTML): só expõe a função, sem montar a janela ScriptUI
     if (typeof F2AE_HOST !== "undefined") { F2AE_HOST.importPackage = importPackage; F2AE_HOST.buildPlan = buildPlan; F2AE_HOST.quickImport = quickImport; F2AE_HOST.version = VERSION; return; }
     // execução automatizada (testes): F2AE_RUN = { file: "...", out: "...", opts: {...} }

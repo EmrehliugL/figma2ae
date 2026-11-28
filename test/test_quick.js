@@ -81,7 +81,8 @@ const { quickImport } = global.F2AE_TEST;
   assert.strictEqual(pkg.quick, true); assert.strictEqual(pkg.layers.length, 3);
   const kinds = pkg.layers.map(l => l.spec.kind);
   assert.deepStrictEqual(kinds, ["shape", "text", "group"], "editável: shape, texto e grupo (nulo), nada de precomp");
-  assert.deepStrictEqual([pkg.layers[0].spec.xf.tx, pkg.layers[0].spec.xf.ty], [100, 200], "posição em relação ao frame dele");
+  assert.deepStrictEqual([pkg.layers[0].spec.xf.tx, pkg.layers[0].spec.xf.ty], [5100, 3200], "coordenada absoluta do canvas");
+  assert.deepStrictEqual(pkg.layers[0].refs[0], { name: "Tela 1", w: 1920, h: 1080, x: 5000, y: 3000 }, "frame de referência");
   assert.strictEqual(pkg.layers[0].frameW, 1920);
 
   // rasterizado: uma imagem separada pra cada camada
@@ -96,8 +97,8 @@ const { quickImport } = global.F2AE_TEST;
   page.selection = [solto];
   r = await P.quickExport({ mode: "vector", options: {} });
   pkg = JSON.parse(r.manifest);
-  assert.strictEqual(pkg.layers[0].center, true);
-  assert.deepStrictEqual([pkg.layers[0].spec.xf.tx, pkg.layers[0].spec.xf.ty], [0, 0]);
+  assert.deepStrictEqual(pkg.layers[0].refs, [], "camada solta não tem frame de referência");
+  assert.deepStrictEqual(pkg.layers[0].bounds, { x: -800, y: -800, w: 200, h: 100 });
 
   /* ------------------------------------------------ After: entra na comp aberta, sem criar comp */
   page.selection = [botao, titulo, card];
@@ -108,6 +109,10 @@ const { quickImport } = global.F2AE_TEST;
   assert.strictEqual(COMPS, 0, "não criou comp nem precomp");
   assert.strictEqual(q.comp, "Minha comp"); assert.strictEqual(q.created, false);
   assert.deepStrictEqual(q.notes, [], q.notes.join("; "));
+  assert.strictEqual(q.place, "frame", "comp do tamanho do frame: mesma posição do Figma");
+  const pos = l => l.property("ADBE Transform Group").property("ADBE Position").value;
+  const bt = aberta._ls.find(l => l.name === "Botão");
+  assert.deepStrictEqual(pos(bt).map(Math.round), [100, 200], "botão no mesmo lugar do Figma");
   const novos = aberta._ls.filter(l => l.selected);
   assert.ok(novos.length >= 4, "camadas novas ficam selecionadas");
   assert.ok(!aberta._ls[aberta._ls.length - 1].selected, "o que já estava na comp não fica selecionado");
@@ -121,7 +126,30 @@ const { quickImport } = global.F2AE_TEST;
   assert.strictEqual(COMPS, 0); assert.strictEqual(c2.numLayers, 3);
   assert.ok(c2._ls.every(l => l.kind === "footage"));
 
+  // comp de outro tamanho: a seleção entra centralizada (mantendo a distância entre as camadas)
+  page.selection = [botao, titulo];
+  r = await P.quickExport({ mode: "vector", options: {} });
+  const c3 = makeComp("Vertical", 1080, 1920); global.app.project.activeItem = c3; MANIFEST = r.manifest;
+  q = quickImport(new File("/pkg/figma2ae.json"));
+  assert.strictEqual(q.place, "center");
+  // caixa da seleção no Figma: x 100..500, y 60..280 → centro (300,170) vai pro centro da comp (540,960)
+  assert.deepStrictEqual(pos(c3._ls.find(l => l.name === "Botão")).map(Math.round), [100 + 240, 200 + 790]);
+
+  // frame de cena (contêiner grande com os frames dentro): usa o frame de dentro, do tamanho da comp
+  const btn2 = makeNode("RECTANGLE", { name: "CTA", x: 300, y: 400, width: 200, height: 60, fills: [solid(1, 1, 1)] });
+  const beat = makeNode("FRAME", { name: "Beat 2", x: 2100, y: 100, width: 1920, height: 1080, clipsContent: true, fills: [solid(0, 0, 0)] }, [btn2]);
+  const cena = makeNode("FRAME", { name: "Cena 3", x: 0, y: 6000, width: 6000, height: 1300, fills: [] }, [beat]);
+  page.children.push(cena); cena.parent = page;
+  page.selection = [btn2];
+  r = await P.quickExport({ mode: "vector", options: {} });
+  const c4 = makeComp("Beat", 1920, 1080); global.app.project.activeItem = c4; MANIFEST = r.manifest;
+  q = quickImport(new File("/pkg/figma2ae.json"));
+  assert.strictEqual(q.place, "frame");
+  assert.deepStrictEqual(pos(c4._ls.find(l => l.name === "CTA")).map(Math.round), [300, 400], "posição dentro do beat, não do contêiner da cena");
+
   // sem comp aberta: cria uma do tamanho do frame e abre
+  page.selection = [botao, titulo, card];
+  r = await P.quickExport({ mode: "raster", options: {} }); MANIFEST = r.manifest;
   global.app.project.activeItem = null; COMPS = 0;
   q = quickImport(new File("/pkg/figma2ae.json"));
   assert.strictEqual(COMPS, 1); assert.strictEqual(q.created, true);
