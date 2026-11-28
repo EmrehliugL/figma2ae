@@ -65,6 +65,7 @@ def build(version, notes):
     os.remove(asar)
     data = open(zpath, "rb").read()
     latest = {"version": version, "notes": notes, "file": "figma2ae-update.zip",
+              "url": f"https://github.com/{REPO}/releases/download/v{version}/figma2ae-update.zip",
               "sha256": hashlib.sha256(data).hexdigest(), "size": len(data),
               "date": datetime.date.today().isoformat()}
     json.dump(latest, open(os.path.join(out, "latest.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)

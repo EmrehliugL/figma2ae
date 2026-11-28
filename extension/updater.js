@@ -86,18 +86,44 @@ function create(o) {
     catch (e) { st.studioPending = true; }
   }
 
+  /* Onde baixar o pacote DESTA versão. Nunca o ".../latest/download/": se saiu outra versão depois da
+     última verificação (o usuário pulou 2 ou 3 atualizações), o "latest" já é outro arquivo e o SHA-256 não bate. */
+  function zipUrl(j) {
+    const src = source();
+    if (src !== DEFAULT_SOURCE) return src + j.file; // servidor próprio / testes (update_source.txt)
+    return j.url || DEFAULT_SOURCE.replace(/latest\/download\/$/, "download/v" + j.version + "/") + j.file;
+  }
+  async function waitIdle() { for (let i = 0; i < 100 && st.checking; i++) await new Promise(r => setTimeout(r, 100)); }
   async function apply() {
     if (st.busy) throw new Error("já está atualizando");
-    if (!info) await check(true);
+    // sempre confere de novo na hora de atualizar: a informação guardada pode ser de horas atrás
+    await waitIdle(); await check(true);
     if (!info) throw new Error(st.error || "sem informação da versão nova");
     if (!st.available) return { ok: true, nothing: true, version: st.current };
     st.busy = true; st.error = ""; st.done = ""; st.progress = 0;
     try {
-      st.phase = "baixando";
-      const buf = await get(info.url || (source() + info.file), { timeout: 120000, onProgress: (g, t) => { st.progress = t ? Math.round(g / t * 100) : 0; } });
-      st.phase = "conferindo";
-      const sha = crypto.createHash("sha256").update(buf).digest("hex");
-      if (sha.toLowerCase() !== String(info.sha256).toLowerCase()) throw new Error("o arquivo baixado não confere (SHA-256 diferente); nada foi alterado");
+      let buf = null, sha = "";
+      for (let attempt = 0; attempt < 2; attempt++) {
+        st.phase = "baixando"; st.progress = 0;
+        try {
+          buf = await get(zipUrl(info), { timeout: 180000, onProgress: (g, t) => { st.progress = t ? Math.round(g / t * 100) : 0; } });
+        } catch (e) {
+          // endereço com a versão não existe (servidor próprio/antigo): cai pro endereço da fonte
+          if (attempt === 0 && zipUrl(info) !== source() + info.file) { buf = await get(source() + info.file, { timeout: 180000, onProgress: (g, t) => { st.progress = t ? Math.round(g / t * 100) : 0; } }); }
+          else throw e;
+        }
+        st.phase = "conferindo";
+        sha = crypto.createHash("sha256").update(buf).digest("hex");
+        if (sha.toLowerCase() === String(info.sha256).toLowerCase()) break;
+        if (attempt === 0) {
+          // saiu versão nova no meio do caminho: pega a informação de novo e tenta mais uma vez
+          log("SHA-256 diferente; conferindo a versão de novo");
+          st.busy = false; await check(true); st.busy = true;
+          if (!st.available) return { ok: true, nothing: true, version: st.current };
+          continue;
+        }
+        throw new Error("o arquivo baixado não confere (SHA-256 diferente); nada foi alterado");
+      }
       const work = path.join(docsDir, "_update", String(info.version).replace(/[^\w.\-]/g, "_"));
       fs.rmSync(work, { recursive: true, force: true }); fs.mkdirSync(work, { recursive: true });
       o.unzip(buf, work);
@@ -131,6 +157,8 @@ function create(o) {
     finally { st.busy = false; }
   }
 
-  return { state: st, check, apply, applyPendingStudio, cmpVer };
+  // confere sozinho se a última verificação tem mais de 15 min (o receptor chama a cada ping do plugin)
+  function refresh() { if (!st.checking && !st.busy && Date.now() - st.lastCheck > 15 * 60 * 1000) check(true).catch(() => {}); }
+  return { state: st, check, apply, applyPendingStudio, refresh, cmpVer };
 }
 module.exports = { create, cmpVer, get, source, DEFAULT_SOURCE };

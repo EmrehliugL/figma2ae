@@ -12,12 +12,12 @@ Projeto do Iug (motion designer, fala português do Brasil, informal). Ele quer 
 - `installer/`: arquivos do zip de instalação (`INSTALAR.bat` aceita `/auto`; `installer/CLAUDE.md` é o roteiro de instalação para outro Claude, diferente deste arquivo).
 
 ## Testes
-`node test/test_export.js`, `test_analysis.js`, `test_studio.js`, `test_panel.js` (precisa de jsdom), `test_update.js <pasta dist/versão>`, `test_ae.js`, `test_effects.js` (máscaras/efeitos nativos no plugin), `test_ae_effects.js` (montagem deles num After falso), `test_flat.js` (menos precomps: clip que não corta vira nulo, preenchimentos sem comp interno), `test_quick.js` (Quick Import: camadas soltas na comp aberta, editável ou PNG separado).
+`node test/test_export.js`, `test_analysis.js`, `test_studio.js`, `test_panel.js` (precisa de jsdom), `test_update.js <pasta dist/versão>`, `test_update_skip.js` (usuário pulou várias versões: tem que instalar a mais nova sem erro de SHA-256), `test_ae.js`, `test_effects.js` (máscaras/efeitos nativos no plugin), `test_ae_effects.js` (montagem deles num After falso), `test_flat.js` (menos precomps: clip que não corta vira nulo, preenchimentos sem comp interno), `test_quick.js` (Quick Import: camadas soltas na comp aberta, editável ou PNG separado).
 
 ## Publicar uma versão (atualização automática pra todo mundo)
 1. `python3 tools/publicar.py X.Y.Z "o que mudou"`: carimba a versão em `extension/version.json`, `after-effects/Figma2AE.jsx`, `CSXS/manifest.xml`, `studio/app/package.json` e gera `dist/`.
 2. Commit com a mensagem = notas da versão e push na `main`. O workflow `.github/workflows/release.yml` cria o Release `vX.Y.Z` com `figma2ae-update.zip`, `latest.json` e o instalador `Figma2AE_vX.Y.Z.zip`.
-3. Os usuários veem "Atualização disponível" (o receptor consulta `https://github.com/EmrehliugL/figma2ae/releases/latest/download/latest.json` ao abrir o After e a cada 6 h).
+3. Os usuários veem "Atualização disponível" (o receptor consulta `https://github.com/EmrehliugL/figma2ae/releases/latest/download/latest.json` ao abrir o After, a cada 15 min enquanto o plugin está aberto e a cada 6 h; o Studio a cada 30 min). O pacote é SEMPRE baixado pelo endereço fixo da versão (`releases/download/vX.Y.Z/`, campo `url` do latest.json) e o updater confere de novo na hora de aplicar: pular versões nunca pode quebrar.
 
 Sempre suba a versão (semver) quando mudar plugin, extensão ou Studio. O updater confere SHA-256 e guarda backup em `Documentos\Figma2AE\_update\backup_<versão>`.
 

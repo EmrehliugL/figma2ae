@@ -117,6 +117,7 @@ function handler(req, res) {
   }
   if (req.method === "GET" && req.url.startsWith("/ping")) {
     if (Date.now() - lastStateWrite > 1500) { lastStateWrite = Date.now(); writeState(); }
+    try { const u0 = upd(); if (u0 && u0.refresh) u0.refresh(); } catch (e) {}
     res.writeHead(200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ app: "Figma2AE", ok: hostOk, error: hostErr, project, auto: !!settings().oAuto && route() === "panel", studio: studioOpen(), route: route(), update: updState() }));
   }

@@ -36,7 +36,7 @@ app.whenReady().then(() => {
   // avisa o After Effects que o Studio está aberto (aí o painel não importa sozinho)
   const beat = () => { try { fs.writeFileSync(path.join(BASE, "_studio.json"), JSON.stringify({ t: Date.now() })); } catch (e) {} };
   beat(); setInterval(beat, 2000);
-  setTimeout(() => checarUpd(true), 4000); setInterval(() => checarUpd(true), 6 * 3600e3);
+  setTimeout(() => checarUpd(true), 4000); setInterval(() => checarUpd(true), 30 * 60e3);
   let tm = 0;
   let known = new Set(); try { known = new Set(fs.readdirSync(BASE)); } catch (e) {}
   try { fs.watch(BASE, () => { clearTimeout(tm); tm = setTimeout(() => {
