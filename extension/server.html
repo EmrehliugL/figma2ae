@@ -138,6 +138,29 @@ function handler(req, res) {
     });
     return;
   }
+  if (req.method === "POST" && req.url.startsWith("/quick")) {
+    // Quick Import: camadas soltas direto na comp aberta (não passa pelo Studio nem pelo painel)
+    const chunks = []; let size = 0;
+    req.on("data", c => { size += c.length; if (size > 512 * 1024 * 1024) req.destroy(); else chunks.push(c); });
+    req.on("end", async () => {
+      let out;
+      try {
+        const qdir = path.join(BASE, "_quick", stamp() + "_" + Math.random().toString(36).slice(2, 6));
+        fs.mkdirSync(qdir, { recursive: true });
+        unzipTo(Buffer.concat(chunks), qdir);
+        const jf = path.join(qdir, "figma2ae.json");
+        const pkg = JSON.parse(fs.readFileSync(jf, "utf8"));
+        if (pkg.format !== "figma2ae" || !pkg.quick) throw new Error("não é um pacote do Quick Import");
+        await checkHost();
+        const r = await evalAE(`f2aeQuick(${JSON.stringify(jf.replace(/\\/g, "/"))})`);
+        try { out = JSON.parse(r); } catch (e) { out = { ok: false, error: r || "o After Effects não respondeu" }; }
+        // os arquivos já foram copiados pra Biblioteca; limpa pacotes rápidos antigos (mais de 1 dia)
+        try { const qb = path.join(BASE, "_quick"); fs.readdirSync(qb).forEach(d => { const fp = path.join(qb, d); if (Date.now() - fs.statSync(fp).mtimeMs > 864e5) fs.rmSync(fp, { recursive: true, force: true }); }); } catch (e) {}
+      } catch (e) { out = { ok: false, error: e.message }; }
+      sendJSON(res, 200, out);
+    });
+    return;
+  }
   if (req.method === "POST" && req.url.startsWith("/build")) {
     // pedido do Figma2AE Studio: monta as tomadas de um pacote recebido
     const chunks = [];

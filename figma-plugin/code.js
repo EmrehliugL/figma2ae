@@ -1177,8 +1177,63 @@ async function exportFrames(req) {
   return { manifest: JSON.stringify(pkg), files: ex.files, count: ex.count, comps: desc.length };
 }
 
+/* ------------------------------------------------------------------ Quick Import (v2.5)
+   Camadas soltas direto na comp aberta no After: cada camada selecionada vira a própria camada
+   (shape/texto editável, sem precomp) ou uma imagem PNG separada (modo rasterizado). */
+function topFrameOf(node) {
+  var top = null, n = node;
+  while (n && n.parent) {
+    if (CONTAINER_TYPES[n.type] && n.type !== "GROUP" && (n.parent.type === "PAGE" || n.parent.type === "SECTION")) top = n;
+    n = n.parent;
+  }
+  return top;
+}
+function quickTargets(sel) {
+  // tira da lista o que já está dentro de outra camada selecionada (senão viria duplicado)
+  var ids = {}; sel.forEach(function (n) { ids[n.id] = true; });
+  return sel.filter(function (n) {
+    if (n.visible === false) return false;
+    for (var p = n.parent; p; p = p.parent) if (ids[p.id]) return false;
+    return true;
+  });
+}
+async function quickExport(req) {
+  var mode = req.mode === "raster" ? "raster" : "vector";
+  var opts = Object.assign({ rasterScale: 2, heavyRaster: true, splitLines: false }, req.options || {});
+  var ex = new Exporter(opts);
+  var nodes = quickTargets(figma.currentPage.selection);
+  if (!nodes.length) throw new Error("Selecione no Figma a camada (ou as camadas) que quer importar.");
+  var pkg = { format: "figma2ae", quick: true, mode: mode, version: 2, created: new Date().toISOString(), file: figma.root.name, page: figma.currentPage.name, options: opts, layers: [], comps: [] };
+  // ordem do Figma (de baixo pra cima) pra empilhar igual no After
+  nodes.sort(function (a, b) { return a.parent === b.parent ? a.parent.children.indexOf(a) - b.parent.children.indexOf(b) : 0; });
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    post({ type: "progress", text: "Exportando " + node.name + " (" + (i + 1) + "/" + nodes.length + ")…" });
+    var top = topFrameOf(node), frameAbs, center = false;
+    if (top && top !== node) frameAbs = m2o(top.absoluteTransform);
+    else {
+      // camada solta no canvas (ou o próprio frame): entra no meio da comp
+      var bb = node.absoluteRenderBounds || node.absoluteBoundingBox || { x: 0, y: 0 };
+      frameAbs = { a: 1, b: 0, c: 0, d: 1, tx: bb.x, ty: bb.y };
+      center = true;
+    }
+    var spec;
+    if (mode === "raster") {
+      var base = ex.baseOf(node, frameAbs, null);
+      spec = await ex.raster(node, frameAbs, base, "IMAGES", "");
+      delete spec.reason;
+    } else spec = await ex.spec(node, frameAbs, 0);
+    var bx = node.absoluteRenderBounds || node.absoluteBoundingBox;
+    pkg.layers.push({ spec: spec, center: center, w: bx ? r2(bx.width) : r2(node.width), h: bx ? r2(bx.height) : r2(node.height), frameW: top ? r2(top.width) : 0, frameH: top ? r2(top.height) : 0, frame: top ? top.name : "" });
+  }
+  return { manifest: JSON.stringify(pkg), files: ex.files, count: nodes.length };
+}
+
 /* resumo da seleção pra interface */
-var selJob = 0, WHOLE = {};
+var selJob = 0, WHOLE = {}, QUICK_START = false;
+function quickList() {
+  try { return quickTargets(figma.currentPage.selection).slice(0, 50).map(function (n) { return { id: n.id, name: n.name, type: n.type }; }); } catch (e) { return []; }
+}
 function sendSelection() {
   var job = ++selJob;
   setTimeout(function () {
@@ -1186,9 +1241,9 @@ function sendSelection() {
     try {
       var targets = resolveTargets(figma.currentPage.selection, WHOLE);
       var desc = describeTargets(targets);
-      post({ type: "selection", count: figma.currentPage.selection.length, targets: desc });
+      post({ type: "selection", count: figma.currentPage.selection.length, targets: desc, quick: quickList() });
       sendThumbs(desc.map(function (d) { return d.frameId; }).filter(Boolean));
-    } catch (e) { post({ type: "selection", count: figma.currentPage.selection.length, targets: [], error: e.message }); }
+    } catch (e) { post({ type: "selection", count: figma.currentPage.selection.length, targets: [], quick: quickList(), error: e.message }); }
   }, 120);
 }
 
@@ -1253,6 +1308,14 @@ async function handle(msg) {
       var res = await exportFrames(msg);
       var nm = res.comps === 1 ? JSON.parse(res.manifest).comps[0].compName : figma.currentPage.name + " - " + res.comps + " comps";
       post({ type: "exported", manifest: res.manifest, files: res.files, count: res.count, name: asciiName(figma.root.name + " - " + nm) });
+    } else if (msg.type === "quickExport") {
+      post({ type: "progress", text: "Preparando…" });
+      var qr = await quickExport(msg);
+      post({ type: "quickExported", manifest: qr.manifest, files: qr.files, count: qr.count, mode: msg.mode, name: asciiName(figma.root.name + " - quick") });
+    } else if (msg.type === "quickMode") {
+      // janelinha flutuante do Quick Import (ou volta pro tamanho normal)
+      if (msg.on) figma.ui.resize(300, 250);
+      else figma.clientStorage.getAsync("f2ae_size").then(function (sz) { figma.ui.resize(sz && sz.w ? sz.w : 520, sz && sz.h ? sz.h : 620); }).catch(function () { figma.ui.resize(520, 620); });
     } else if (msg.type === "setWhole") {
       WHOLE = {}; (msg.whole || []).forEach(function (id) { WHOLE[id] = true; }); sendSelection();
     } else if (msg.type === "peek") {
@@ -1260,11 +1323,13 @@ async function handle(msg) {
       if (pn) figma.viewport.scrollAndZoomIntoView([pn]); // mostra sem mudar a seleção
     } else if (msg.type === "refreshSelection") {
       SCENE_CACHE = null; sendSelection();
+      if (QUICK_START) post({ type: "startQuick" });
     } else if (msg.type === "close") {
       figma.closePlugin();
     } else if (msg.type === "resize") {
-      var rw = Math.max(420, Math.min(1600, msg.w | 0)), rh = Math.max(360, Math.min(1200, msg.h | 0));
+      var rw = Math.max(msg.quick ? 240 : 420, Math.min(1600, msg.w | 0)), rh = Math.max(msg.quick ? 200 : 360, Math.min(1200, msg.h | 0));
       figma.ui.resize(rw, rh);
+      if (msg.quick) return;
       clearTimeout(saveSizeT); saveSizeT = setTimeout(function () { figma.clientStorage.setAsync("f2ae_size", { w: rw, h: rh }).catch(function () {}); }, 400);
     } else if (msg.type === "notify") {
       figma.notify(msg.text);
@@ -1276,8 +1341,9 @@ async function handle(msg) {
 
 if (typeof figma !== "undefined" && !(typeof globalThis !== "undefined" && globalThis.__F2AE_TEST__)) {
   var saveSizeT = 0;
-  figma.showUI(__html__, { width: 520, height: 620, themeColors: false, title: "Figma2AE" });
-  figma.clientStorage.getAsync("f2ae_size").then(function (sz) { if (sz && sz.w && sz.h) figma.ui.resize(sz.w, sz.h); }).catch(function () {});
+  QUICK_START = figma.command === "quick";
+  figma.showUI(__html__, QUICK_START ? { width: 300, height: 250, themeColors: false, title: "Figma2AE · Quick Import" } : { width: 520, height: 620, themeColors: false, title: "Figma2AE" });
+  if (!QUICK_START) figma.clientStorage.getAsync("f2ae_size").then(function (sz) { if (sz && sz.w && sz.h) figma.ui.resize(sz.w, sz.h); }).catch(function () {});
   figma.ui.onmessage = handle;
   figma.on("selectionchange", sendSelection);
   figma.on("currentpagechange", function () { SCENE_CACHE = null; sendSelection(); });
@@ -1288,5 +1354,5 @@ if (typeof module !== "undefined") module.exports = {
   fnv: fnv, mul: mul, inv: inv, apply: apply, decompose: decompose, relXf: relXf, m2o: m2o,
   detectScenes: detectScenes, extractElements: extractElements, scorePair: scorePair, assign: assign,
   linkScene: linkScene, diffStates: diffStates, analyze: analyze, exportFrames: exportFrames, resolveTargets: resolveTargets, describeTargets: describeTargets, Exporter: Exporter,
-  compNameFor: compNameFor, handle: handle, _last: function () { return LAST; }
+  compNameFor: compNameFor, handle: handle, quickExport: quickExport, quickTargets: quickTargets, _last: function () { return LAST; }
 };

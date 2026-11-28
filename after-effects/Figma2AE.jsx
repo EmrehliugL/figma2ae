@@ -7,7 +7,7 @@
  *  e ative Preferências > Scripting e Expressões > "Permitir que scripts gravem arquivos e acessem a rede".
  */
 (function F2AE(thisObj) {
-    var VERSION = "2.4.0";
+    var VERSION = "2.5.0";
     var SETTINGS = "Figma2AE";
     var IS_WIN = $.os.toLowerCase().indexOf("windows") >= 0;
 
@@ -1159,6 +1159,43 @@
         return { comps: comps.length, sequences: seqs.length, nulls: ctx.nulls || 0, compItems: comps.concat(seqs), layers: ctx.layers, precomps: ctx.precomps, notes: ctx.notes, fonts: fonts, dir: dir.fsName };
     }
 
+    /* ============================================================ Quick Import (v2.5)
+       Camadas escolhidas no Figma entram soltas na comp aberta (ou numa comp nova, se nenhuma estiver aberta).
+       Cada camada do Figma vira a própria camada: shape/texto editável ou imagem PNG separada. */
+    function quickImport(jsonFile) {
+        var pkg = parseJSON(readText(jsonFile));
+        if (pkg.format !== "figma2ae" || !pkg.quick) throw new Error("Esse arquivo não é um Quick Import do Figma2AE.");
+        var items = pkg.layers || [];
+        if (!items.length) throw new Error("Nada pra importar.");
+        app.beginUndoGroup("Figma2AE: Quick Import");
+        try { app.beginSuppressDialogs(); } catch (e) {}
+        var ctx, comp = app.project.activeItem, created = false, before = 0;
+        try {
+            ctx = new Ctx(pkg, jsonFile.parent, { library: true, nulls: "top" });
+            if (!(comp instanceof CompItem)) {
+                // nenhuma comp aberta: cria uma do tamanho do frame de origem
+                var fw = 1920, fh = 1080;
+                for (var i = 0; i < items.length; i++) if (items[i].frameW > 0) { fw = Math.round(items[i].frameW); fh = Math.round(items[i].frameH); break; }
+                comp = app.project.items.addComp(uniqueCompName(ctx.fComps, "Quick Import"), clamp(fw, 4, 30000), clamp(fh, 4, 30000), 1, 10, 30);
+                comp.parentFolder = ctx.fComps; created = true;
+                try { comp.openInViewer(); } catch (e) {}
+            }
+            before = comp.numLayers;
+            for (var j = 0; j < comp.numLayers; j++) { try { comp.layer(j + 1).selected = false; } catch (e) {} }
+            for (var k = 0; k < items.length; k++) {
+                var it = items[k], spec = it.spec;
+                if (it.center) shiftSpec(spec, (comp.width - (it.w || spec.w || 0)) / 2, (comp.height - (it.h || spec.h || 0)) / 2);
+                buildLayer(comp, spec, ctx);
+            }
+            try { flushStyles(ctx); } catch (e) {}
+            // deixa selecionado só o que acabou de entrar (fica no topo da comp)
+            var added = comp.numLayers - before;
+            for (var q = 1; q <= added; q++) { try { comp.layer(q).selected = true; } catch (e) {} }
+        } finally { try { app.endSuppressDialogs(false); } catch (e) {} app.endUndoGroup(); }
+        var fonts = []; for (var f in ctx.missingFonts) fonts.push(f);
+        return { layers: items.length, added: comp.numLayers - before, comp: comp.name, created: created, notes: ctx.notes, fonts: fonts };
+    }
+
     /* ============================================================ painel */
     function buildUI(thisObj) {
         var w = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Figma2AE", undefined, { resizeable: true });
@@ -1205,9 +1242,9 @@
     }
 
     // expõe funções puras pra testes fora do AE
-    if (typeof F2AE_TEST !== "undefined") { F2AE_TEST.parsePath = parsePath; F2AE_TEST.decompose = decompose; F2AE_TEST.buildLayer = buildLayer; F2AE_TEST.flushStyles = flushStyles; F2AE_TEST.canFlatten = canFlatten; return; }
+    if (typeof F2AE_TEST !== "undefined") { F2AE_TEST.parsePath = parsePath; F2AE_TEST.decompose = decompose; F2AE_TEST.buildLayer = buildLayer; F2AE_TEST.flushStyles = flushStyles; F2AE_TEST.canFlatten = canFlatten; F2AE_TEST.quickImport = quickImport; return; }
     // usado pela extensão (painel HTML): só expõe a função, sem montar a janela ScriptUI
-    if (typeof F2AE_HOST !== "undefined") { F2AE_HOST.importPackage = importPackage; F2AE_HOST.buildPlan = buildPlan; F2AE_HOST.version = VERSION; return; }
+    if (typeof F2AE_HOST !== "undefined") { F2AE_HOST.importPackage = importPackage; F2AE_HOST.buildPlan = buildPlan; F2AE_HOST.quickImport = quickImport; F2AE_HOST.version = VERSION; return; }
     // execução automatizada (testes): F2AE_RUN = { file: "...", out: "...", opts: {...} }
     if (typeof F2AE_RUN !== "undefined") {
         var res;

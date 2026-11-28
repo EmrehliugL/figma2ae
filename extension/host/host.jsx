@@ -64,3 +64,15 @@ function f2aeBuildPlan(planPath, opts) {
         return '{"ok":false,"error":"' + f2aeEsc(e.message + (e.line ? " (linha " + e.line + ")" : "")) + '"}';
     }
 }
+
+function f2aeQuick(jsonPath) {
+    // Quick Import: camadas soltas na comp aberta
+    try {
+        try { if (F2AE_HOST.dir) { var lib = new File(F2AE_HOST.dir + "/jsx/Figma2AE.jsx"); if (lib.exists) $.evalFile(lib); } } catch (eR) {}
+        if (!F2AE_HOST.quickImport) return '{"ok":false,"error":"' + f2aeEsc("Script do Figma2AE desatualizado: atualize o Figma2AE e reinicie o After Effects.") + '"}';
+        var r = F2AE_HOST.quickImport(new File(jsonPath));
+        return '{"ok":true,"layers":' + r.layers + ',"comp":"' + f2aeEsc(r.comp) + '","created":' + (r.created ? "true" : "false") + ',"fonts":' + f2aeArr(r.fonts) + ',"notes":' + f2aeArr(r.notes.slice(0, 40)) + '}';
+    } catch (e) {
+        return '{"ok":false,"error":"' + f2aeEsc(e.message + (e.line ? " (linha " + e.line + ")" : "")) + '"}';
+    }
+}

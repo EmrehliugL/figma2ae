@@ -134,13 +134,35 @@ input[type=number]{-moz-appearance:textfield}
 .f2num .stp button:hover{background:#2f2f2f;color:#fff}
 .f2num .stp button:active{background:#2d8ceb;color:#fff}
 .f2num .stp svg{width:7px;height:5px;display:block}
+
+/* ===== Quick Import (v2.5): janelinha flutuante ===== */
+.qbtn{border:1px solid #2d8ceb66;background:#2d8ceb1a;color:#9fc8f5;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600;white-space:nowrap;flex:none}
+.qbtn:hover{background:#2d8ceb33;color:#fff}
+#quick{display:none;flex-direction:column;height:100%;padding:10px 12px 12px;gap:8px}
+body.isquick .app{display:none}
+body.isquick #quick{display:flex}
+.qtop{display:flex;align-items:center;gap:8px}
+.qtop b{color:var(--beige2);font-size:12.5px;flex:1}
+.qback{border:0;background:transparent;color:var(--faint);font-size:11px;padding:2px 4px}
+.qback:hover{color:var(--text)}
+.qsel{flex:1;min-height:0;overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:4px;padding:6px 8px;font-size:11.5px;color:var(--muted)}
+.qsel div{display:flex;gap:7px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 0}
+.qsel i{font-style:normal;color:var(--faint);font-size:10px;min-width:30px;text-transform:uppercase}
+.qsel .none{color:var(--faint);text-align:center;padding:14px 4px;white-space:normal;display:block}
+.qgo{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.qgo .btn{padding:8px 6px;font-size:12px}
+.qrow{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--faint)}
+.qrow select{background:var(--panel2);border:0;border-radius:4px;padding:2px 5px;color:var(--text);font-size:11px}
+.qst{font-size:11px;color:var(--muted);min-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qst.ok{color:var(--new)}.qst.err{color:#e0795e}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><img class="logo" src="data:image/png;base64,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" alt="">Figma2AE<span class="vchip" id="vchip" title="Versão do plugin">v2.4.0</span></div>
+    <div class="brand"><img class="logo" src="data:image/png;base64,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" alt="">Figma2AE<span class="vchip" id="vchip" title="Versão do plugin">v2.5.0</span></div>
     <div class="status" id="status">Selecione o que quer levar pro After Effects.</div>
+    <button class="qbtn" id="qopen" title="Janelinha flutuante: clique em camadas no Figma e importe soltas na comp aberta do After">⚡ Quick Import</button>
     <div class="aepill" id="aepill" title="Painel Figma2AE no After Effects"><span class="aedot" id="aedot"></span><span id="aetxt">AE</span></div>
   </div>
   <div class="upd" id="upd" hidden></div>
@@ -161,9 +183,19 @@ input[type=number]{-moz-appearance:textfield}
     <div class="hint" id="aehint" style="margin-top:7px"></div>
   </div>
 </div>
+<div id="quick">
+  <div class="qtop"><b>⚡ Quick Import</b><span class="aedot" id="qdot" title="After Effects"></span><button class="qback" id="qclose" title="Voltar pro Figma2AE completo">voltar ↩</button></div>
+  <div class="qsel" id="qsel"></div>
+  <div class="qgo">
+    <button class="btn primary" id="qvec" disabled title="Cada camada vira shape ou texto editável, solta na comp aberta (sem precomp)">Importar</button>
+    <button class="btn" id="qras" disabled title="Cada camada vira uma imagem PNG separada (com transparência), na mesma posição">Como imagem</button>
+  </div>
+  <div class="qrow">Qualidade da imagem <select id="qScale"><option value="1">1x</option><option value="2" selected>2x</option><option value="3">3x</option><option value="4">4x</option></select></div>
+  <div class="qst" id="qst"></div>
+</div>
 <div class="rz" id="rz"></div>
 <script>
-const F2AE_VERSION = "2.4.0"; // carimbado pelo tools/publicar.py
+const F2AE_VERSION = "2.5.0"; // carimbado pelo tools/publicar.py
 const $ = s => document.querySelector(s);
 setTimeout(() => { const v = document.getElementById("vchip"); if (v) v.textContent = "v" + F2AE_VERSION; }, 0);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -186,6 +218,7 @@ async function pingAE() {
   $("#aehint").textContent = AE.on ? (AE.route === "studio" ? "Ao enviar, o Figma2AE Studio abre com as telas pra separar as tomadas e montar no After." : AE.auto ? "O After Effects está em modo automático: importa assim que receber." : "Ao enviar, o painel Figma2AE abre no After Effects com os comps pra importar.") : "O After Effects não respondeu. Ele precisa estar aberto (a extensão Figma2AE liga junto com ele). Ou salve o .zip.";
   paintUpdate();
   setBusy(busy);
+  if (QUICK) qrender();
 }
 setInterval(pingAE, 2500);
 /* ---------- atualização: o After Effects (receptor) baixa e instala; aqui é só o botão ---------- */
@@ -229,6 +262,53 @@ async function runUpdate() {
 const OPT_KEYS = ["oRef", "oBg", "oCont", "oHeavy", "oLines", "oScale"];
 try { const o = JSON.parse(localStorage.getItem("f2ae_opts") || "{}"); OPT_KEYS.forEach(k => { if (o[k] === undefined) return; const el = $("#" + k); if (el.type === "checkbox") el.checked = o[k]; else el.value = o[k]; }); } catch (e) {}
 OPT_KEYS.forEach(k => $("#" + k).onchange = () => { try { const o = {}; OPT_KEYS.forEach(x => { const el = $("#" + x); o[x] = el.type === "checkbox" ? el.checked : el.value; }); localStorage.setItem("f2ae_opts", JSON.stringify(o)); } catch (e) {} });
+
+/* ---------- Quick Import ---------- */
+let QUICK = false, QSEL = [], qbusy = false;
+const QTYPE = { TEXT: "texto", RECTANGLE: "forma", ELLIPSE: "forma", VECTOR: "vetor", LINE: "linha", STAR: "forma", POLYGON: "forma", BOOLEAN_OPERATION: "vetor", GROUP: "grupo", FRAME: "frame", INSTANCE: "comp.", COMPONENT: "comp." };
+function qstatus(t, kind) { const el = $("#qst"); el.className = "qst" + (kind ? " " + kind : ""); el.innerHTML = kind === "busy" ? '<span class="spin"></span> ' + esc(t) : esc(t); }
+function qrender() {
+  const el = $("#qsel");
+  el.innerHTML = QSEL.length ? QSEL.map(q => `<div><i>${esc(QTYPE[q.type] || q.type.toLowerCase())}</i><span>${esc(q.name)}</span></div>`).join("") +
+    (QSEL.length >= 50 ? '<div><i></i><span>…</span></div>' : "")
+    : '<span class="none">Clique numa camada no Figma (ou várias, com Shift).<br>Elas entram soltas na comp aberta no After.</span>';
+  const can = QSEL.length && !qbusy;
+  $("#qvec").disabled = !can; $("#qras").disabled = !can;
+  $("#qvec").textContent = QSEL.length > 1 ? `Importar ${QSEL.length}` : "Importar";
+  $("#qras").textContent = QSEL.length > 1 ? `${QSEL.length} imagens` : "Como imagem";
+  $("#qdot").className = "aedot" + (AE.on ? " on" : "");
+}
+function setQuick(on) {
+  QUICK = on; document.body.classList.toggle("isquick", on);
+  send({ type: "quickMode", on });
+  if (on) { qstatus(AE.on ? "" : "Abra o After Effects pra importar.", AE.on ? "" : "err"); qrender(); }
+}
+$("#qopen").onclick = () => setQuick(true);
+$("#qclose").onclick = () => setQuick(false);
+try { const qs = localStorage.getItem("f2ae_qscale"); if (qs) $("#qScale").value = qs; } catch (e) {}
+$("#qScale").onchange = () => { try { localStorage.setItem("f2ae_qscale", $("#qScale").value); } catch (e) {} };
+function quickGo(mode) {
+  if (!QSEL.length || qbusy) return;
+  if (!AE.on) { qstatus("O After Effects não respondeu. Ele precisa estar aberto.", "err"); return; }
+  qbusy = true; qrender(); qstatus(mode === "raster" ? "Rasterizando…" : "Exportando…", "busy");
+  send({ type: "quickExport", mode, options: { rasterScale: +$("#qScale").value, heavyRaster: $("#oHeavy").checked, splitLines: false } });
+}
+$("#qvec").onclick = () => quickGo("vector");
+$("#qras").onclick = () => quickGo("raster");
+async function quickSend(m) {
+  const files = [{ path: "figma2ae.json", bytes: new TextEncoder().encode(m.manifest) }].concat(m.files);
+  try {
+    qstatus("Mandando pro After…", "busy");
+    const r = await fetch(AE_URL + "/quick", { method: "POST", headers: { "Content-Type": "application/zip", "X-F2AE-Name": encodeURIComponent(m.name) }, body: makeZip(files) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || "o After recusou");
+    const n = j.layers || m.count;
+    qstatus(`${n} camada${n > 1 ? "s" : ""} em “${j.comp}”` + (j.notes && j.notes.length ? ` · ${j.notes.length} aviso${j.notes.length > 1 ? "s" : ""}` : ""), "ok");
+    if (j.notes && j.notes.length) $("#qst").title = j.notes.join("\n");
+  } catch (e) {
+    qstatus(/Failed to fetch|NetworkError/i.test(e.message) ? "Não achei o After Effects. Ele está aberto?" : "Erro: " + e.message, "err");
+  } finally { qbusy = false; qrender(); }
+}
 
 function status(t, spin) { $("#status").innerHTML = (spin ? '<span class="spin"></span> ' : "") + esc(t); }
 function setBusy(b) { busy = b; const n = checked().length; $("#exportar").disabled = b || !n; $("#salvar").disabled = b || !n; }
@@ -332,8 +412,11 @@ function warningsOf(pkg) {
 
 onmessage = ev => {
   const m = ev.data.pluginMessage; if (!m) return;
-  if (m.type === "progress") status(m.text, true);
+  if (m.type === "progress") { status(m.text, true); if (QUICK && qbusy) qstatus(m.text, "busy"); }
+  else if (m.type === "startQuick") { if (!QUICK) setQuick(true); }
+  else if (m.type === "quickExported") quickSend(m);
   else if (m.type === "selection") {
+    QSEL = m.quick || []; if (QUICK) qrender();
     TARGETS = m.targets || [];
     if (!busy) status(m.error ? "Erro ao ler a seleção: " + m.error : TARGETS.length ? `${m.count} ite${m.count > 1 ? "ns" : "m"} selecionado${m.count > 1 ? "s" : ""}` : "Selecione o que quer levar pro After Effects.");
     render();
@@ -381,11 +464,11 @@ onmessage = ev => {
       done("Pacote salvo", `Salve <b>${esc(m.name)}.f2ae.zip</b>. No After Effects, no painel <b>Figma2AE</b>, clique em <b>Abrir pacote…</b>.`);
     }
   }
-  else if (m.type === "error") { setBusy(false); status("Erro: " + m.text); }
+  else if (m.type === "error") { setBusy(false); status("Erro: " + m.text); if (qbusy) { qbusy = false; qrender(); qstatus("Erro: " + m.text, "err"); } }
 };
 
 (() => { const rz = $("#rz"); let st = null, pend = null, raf = 0;
-  const flush = () => { raf = 0; if (pend) { send({ type: "resize", w: pend.w, h: pend.h }); pend = null; } };
+  const flush = () => { raf = 0; if (pend) { send({ type: "resize", w: pend.w, h: pend.h, quick: QUICK }); pend = null; } };
   rz.onpointerdown = e => { e.preventDefault(); st = { x: e.screenX, y: e.screenY, w: window.innerWidth, h: window.innerHeight }; rz.setPointerCapture(e.pointerId); document.body.classList.add("resizing"); };
   rz.onpointermove = e => { if (!st) return;
     pend = { w: Math.round(st.w + e.screenX - st.x), h: Math.round(st.h + e.screenY - st.y) };

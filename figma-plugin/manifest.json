@@ -16,5 +16,15 @@
    "http://localhost:7452"
   ],
   "reasoning": "Envia os frames direto pro painel do Figma2AE no After Effects, que roda no próprio computador."
- }
+ },
+ "menu": [
+  {
+   "name": "Figma2AE",
+   "command": "main"
+  },
+  {
+   "name": "Quick Import",
+   "command": "quick"
+  }
+ ]
 }
